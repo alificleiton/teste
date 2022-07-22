@@ -50,6 +50,7 @@ if ($acao == "add"){
 				INNER JOIN tb_cad_idioma_status c ON b.status_id = c.status_id AND c.idioma_id = '" . $_SESSION["care-br"]["idioma_id"] . "'
 				INNER JOIN tb_cad_usuario d ON a.usuario_id = d.usuario_id
 				LEFT JOIN tb_cad_empresa e ON a.empresa_id_varejo = e.empresa_id
+				LEFT JOIN tb_prod_os_planner_tecnico pt ON pt.id_planner_tecnico = a.usuario_tecnico_reparo
 				INNER JOIN tb_cad_produto f ON a.produto_id = f.produto_id
 				INNER JOIN tb_cad_idioma_produto g ON f.produto_id = g.produto_id AND g.idioma_id = '" . $_SESSION["care-br"]["idioma_id"] . "'
 				INNER JOIN tb_cad_empresa h ON f.empresa_id = h.empresa_id
@@ -288,28 +289,9 @@ if ($acao == "add"){
 			if(tipo_servico == 18){
 				//getStatusNovo();
 			}
-			$(".os_solicitante_servico").change(function(){
-               
-				$.ajax({
-				  type: "POST",
-				  url: 'os_controle_aguarda_analise_edicao.php',
-				  success: function() {
-				  var verificacliente="<?=$clienteconfig_id?>";	
-				  if (verificacliente==123){
-					if ($(".os_solicitante_servico").val()=="<?=utf8_decode('X01-Falha nÃ£o encontrada')?>"){ 
-					   $("#status_id_novo").append('<option title="Teste" alt="Teste" value="18">Teste</option>');
-					 
-					  }
-					  else{
-					  	$("#status_id_novo option[value='18']").remove();
-					  }
-				   }  
-				}
 
-				});	
-			
-				
-               
+			$('.os_limpeza').change(function (){
+				$("#usuario_aprovacao ").val($('.os_limpeza option:selected').val());
 			});
 
 
@@ -334,9 +316,7 @@ if ($acao == "add"){
 			});			
 
 
-			//Comentado, pois a mesma consulta é feita na função getPecasGSPN() também no docuemnt ready
-			//getPecaLista(); 
-
+			getPecaLista();
 			getServicoLista();
 			
 			// setar status de acordo com checklist
@@ -394,77 +374,11 @@ if ($acao == "add"){
 								return false;
 							}
 						}
-
-						// Verifica os preï¿½os
-						var ok = 'ok';
-						$(".osprodutopeca_id").each(function(){
-							osprodutopeca_id = $(this).val();
-							var valor_venda = $("#valor_venda_" + osprodutopeca_id).val();
-							var valor_desconto = $("#valor_desconto_" + osprodutopeca_id).val();
-							// var valor_maodeobra = $("#valor_maodeobra_" + osprodutopeca_id).val();
-							var peca_cobrar = $("#peca_cobrar_" + osprodutopeca_id).val();
-							var osprodutopeca_valor_venda = $("#osprodutopeca_valor_venda_" + osprodutopeca_id).val();
-							osprodutopeca_valor_venda = osprodutopeca_valor_venda.replace('.', '');
-							osprodutopeca_valor_venda = osprodutopeca_valor_venda.replace(',', '.');
-							if (osprodutopeca_valor_venda == '')
-								osprodutopeca_valor_venda = '0.00';
-							var osprodutopeca_desconto = $("#osprodutopeca_desconto_" + osprodutopeca_id).val();
-							osprodutopeca_desconto = osprodutopeca_desconto.replace('.', '');
-							osprodutopeca_desconto = osprodutopeca_desconto.replace(',', '.');
-							if (osprodutopeca_desconto == '')
-								osprodutopeca_desconto = '0.00';
-							// var osprodutopeca_valor_mao_obra = $("#osprodutopeca_valor_mao_obra_" + osprodutopeca_id).val();
-							// osprodutopeca_valor_mao_obra = osprodutopeca_valor_mao_obra.replace('.', '');
-							// osprodutopeca_valor_mao_obra = osprodutopeca_valor_mao_obra.replace(',', '.');
-							var osprodutopeca_cobrar = $("#osprodutopeca_cobrar_" + osprodutopeca_id).val();
-							// if (osprodutopeca_valor_mao_obra == '')
-							// 	osprodutopeca_valor_mao_obra = '0.00';
-							if (osprodutopeca_cobrar == 'S') {
-								if (valor_venda != osprodutopeca_valor_venda) {
-									alert('Valor de venda não foi salvo!');
-									ok = 'nok';
-									return false;
-								} else if (valor_desconto != osprodutopeca_desconto) {
-									alert('Valor de desconto não foi salvo!');
-									ok = 'nok';
-									return false;
-								// } else if (valor_maodeobra != osprodutopeca_valor_mao_obra) {
-								// 	alert('Valor de mÃ£o de obra nÃ£o foi salvo!');
-								// 	ok = 'nok';
-								// 	return false;
-								} else if (peca_cobrar != osprodutopeca_cobrar) {
-									alert('Campo "Cobrar" não foi salvo!');
-									ok = 'nok';
-									return false;
-								}
-							}
-						});
-
-						if (ok == 'nok') {
-							return false;
-						}
 				
 						$("#numero_id").val($(".numero_local_os").val());
 				
 						// confirmar operaÃ§Ã£o e submeter formulÃ¡rio via ajax
 						if (confirm("<?=fct_get_var('global.php', 'var_msg_os_analise_tecnica_confirma', $_SESSION["care-br"]["idioma_id"])?>")){												
-							// Não salvar com a quantidade zerada
-							var osprodutopeca_id;
-							var ok = 'ok';
-							$(".osprodutopeca_id").each(function(){
-								osprodutopeca_id = $(this).val();
-								var osprodutopeca_qtde = $("#osprodutopeca_qtde_" + osprodutopeca_id).val();
-								if (osprodutopeca_qtde == 0) {
-									alert("Existe peça com a quantidade zerada!");
-									ok = 'nok';
-									return false;
-								}
-							});
-
-							if (ok == 'nok') {
-								return false;
-							}
-
 							var cliente_id = $("#cliente_id").val();
 							var clienteconfig_id = $("#clienteconfig_id").val();
 							var status_id = $("#status_id").val();						
@@ -871,47 +785,16 @@ if ($acao == "add"){
 				}
 			}
 		}
-
-		function inserir_peca_externa(peca){
-			
-
-			var os_id = $("#os_id").val();
-			var produto_id = $("#produto_id").val();
-			var produto_id_peca = $("#produto_id_peca").val();
-			var clienteconfig_id = $("#clienteconfig_id").val();
-			var linha_id = $("#linha_id").val();
-			var os_cobertura = $("#os_cobertura").val();
-			var peca_complementar = '';
-			
-			if(clienteconfig_id == '123') {
-			    peca_complementar = $("#peca_complementar").val();
-			}
-
-			
-			$.ajax({
-			  type: "POST",
-			  url: 'os_controle_aguarda_analise_acao.php',
-			  data: {acao: 'add_peca_lista', linha_id:linha_id,os_cobertura:os_cobertura,os_id: os_id, produto_id: produto_id, produto_id_peca: produto_id_peca, clienteconfig_id: clienteconfig_id, peca_complementar: peca_complementar},
-			  async: false,
-			  success: function(data) {
-				//getPecaLista();
-				//getServicoLista();
-			  }
-			});
-		}
 		
 		function getPecaLista(){
 			var os_id = $("#os_id").val();
 			var produto_id = $("#produto_id").val();
 			var os_peca_precisa = $(".os_peca_precisa").val();
 			var clienteconfig_id = $("#clienteconfig_id").val();
-			var cliente_id = $("#cliente_id").val();
 			var os_cobertura = $("#os_cobertura").val();
 			var modelo_consulta = $("#modelo_consulta_peca").val();
 
 			if (os_peca_precisa == "S") {
-				// $("#servico_lista").hide();
-				var pecas_gspn;
 				$.ajax({
 					type: "POST",
 					url: 'os_controle_aguarda_analise_edicao.php',
@@ -920,149 +803,20 @@ if ($acao == "add"){
 					success: function(data) {
 						$("#peca_lista").html(data);
 						
-						$.ajax({
-							type: "POST",
-							url: 'gspn/acao.php',
-							data: {acao: 'get_peca_lista', os_id: os_id, modelo_consulta: modelo_consulta, cliente_id: cliente_id},
-							async: false,
-							success: function(data) {
-								var retorno = JSON.parse(data);
-								
-								$("#produto_id_peca").html("<option>Selecione...</option>");
-
-								if(retorno.code) { 
-									var pecas = retorno.data;
-
-									$(pecas).each(function(i, v) { 
-										var opt = `<option value="${v.PartsNo}">${v.Location} | ${v.PartsNo} - ${v.PartsDesc}</option>`;
-										$("#produto_id_peca").append(opt);
-									});
-
-								}	
-								pecas_gspn=retorno.data;								
-
-
-
-								
-							}
-						});
-                        <?
-						$rotina_link = fct_get_rotina_invisivel(VAR_MENU_CABECALHO, 'geral.php');
-							$acesso_liberado = strpos($rotina_link, "pecas_externas");
-						if ($acesso_liberado){
-						?>
-
-						$.ajax({
-						  type: "POST",
-						  url: 'os_controle_aguarda_analise_csp.php',
-						  data: {acao: 'get_produto_externo', produto_id: produto_id,pecas_gspn:pecas_gspn},
-						  async: false,
-						  success: function(data) { 
-						  	$("#produto_id_peca").append(data);
-						  }
-						});	
-
-						<?}?>
-
-
-						$("#produto_id_peca").attr("onchange", "addPecaLista()");
-
-						$( "#produto_id_peca" ).combobox({
-							select: function(event, ui) {
-								addPecaListaCRC();
-								getPecaLista();
+						$("#produto_id_peca" ).combobox({
+								select: function(event, ui) {
+								addPecaLista();
 								getServicoLista();
 							}
 						});
-
-						// $("#produto_id_peca" ).combobox({
-						// 		select: function(event, ui) {
-						// 		addPecaLista();
-						// 	}
-						// });
 					}
 				});
 			}
 			else{
-				// $("#servico_lista").show();
 				$("#peca_lista").html("");
 			}
 			getStatusNovo();
 		}
-
-		function addPecaListaCRC() {
-			var os_id = $("#os_id").val();
-			var produto_id = $("#produto_id").val();
-			var produto_id_peca = $("#produto_id_peca").val();
-			var clienteconfig_id = $("#clienteconfig_id").val();
-			var linha_id = $("#linha_id").val();
-			var os_cobertura = $("#os_cobertura").val();
-			var cliente_id = $("#cliente_id").val(); 
-			var produto_texto=$("#produto_id_peca").text();
-
-			// console.log(produto_id_peca);
-			if (produto_texto.indexOf("Fora GSPN")>0){
-				inserir_peca_externa(produto_id_peca);
-				//return false;
-			}else{
-
-				$.ajax({
-					type: "POST",
-					url: 'gspn/acao.php',
-					data: {acao: 'get_peca_info', parts_no: produto_id_peca, cliente_id: cliente_id},
-					async: false,
-					success: function(data) {
-						var retorno = JSON.parse(data);
-						// console.log(data);
-						if(retorno.code == 0)
-							alert(retorno.msg);
-						
-						// else { 
-							var peca = retorno.data;
-							var pecas = { 
-								modelo: peca.PartsNo,
-								qtd: 1,
-								descricao:  peca.PartsDescription
-							}
-							cadPecaGSPN(pecas, produto_id);
-						// }
-					}
-				});
-		    }
-		}
-
-		// function getPecaLista(){
-		// 	var os_id = $("#os_id").val();
-		// 	var produto_id = $("#produto_id").val();
-		// 	var os_peca_precisa = $(".os_peca_precisa").val();
-		// 	var clienteconfig_id = $("#clienteconfig_id").val();
-		// 	var os_cobertura = $("#os_cobertura").val();
-		// 	var modelo_consulta = $("#modelo_consulta_peca").val();
-
-		// 	if (os_peca_precisa == "S") {
-		// 		$("#servico_lista").hide();
-		// 		$.ajax({
-		// 			type: "POST",
-		// 			url: 'os_controle_aguarda_analise_edicao.php',
-		// 			data: {acao: 'get_peca_lista', os_id: os_id, produto_id: produto_id,clienteconfig_id:clienteconfig_id,os_cobertura:os_cobertura},
-		// 			async: false,
-		// 			success: function(data) {
-		// 				$("#peca_lista").html(data);
-						
-		// 				$("#produto_id_peca" ).combobox({
-		// 						select: function(event, ui) {
-		// 						addPecaLista();
-		// 					}
-		// 				});
-		// 			}
-		// 		});
-		// 	}
-		// 	else{
-		// 		$("#servico_lista").show();
-		// 		$("#peca_lista").html("");
-		// 	}
-		// 	getStatusNovo();
-		// }
 		
 		
 		var cont_total = 0;
@@ -1090,192 +844,79 @@ if ($acao == "add"){
 			  	//alert(data);
 				getPecaLista();
 				getServicoLista();
+				if (clienteconfig_id == 20 || clienteconfig_id == 82) {
+					var valor_total = $("#valor_total").val();
+					if (os_cobertura == 'GARANTEC-ESTENDIDA' || os_cobertura == 'LUIZASEG-ESTENDIDA' || os_cobertura == 'CARDIF-ESTENDIDA' || os_cobertura == 'ZURICH-ESTENDIDA' || os_cobertura == 'ZURICH-FAST-ESTENDIDA' || os_cobertura == 'ASSURANT-ESTENDIDA' || os_cobertura == 'VIRGINIA-ESTENDIDA' || os_cobertura == 'ASSURANT CELULAR-ESTENDIDA' || os_cobertura == 'VIRGINIA CELULAR-ESTENDIDA') {
+						if (valor_total > 110 && cont_total == 0) {
+							alert("O valor das pecas ultrapassou R$110,00. Sub Status alterado para AGP-FORA DO CUSTO");
+							$(".os_sub_status").val("AGP-FORA DO CUSTO");
+							cont_total++;
+						}
+					}
+				}
 			  }
 			});
 		}
 		
-		// function updtPecaLista(osprodutopeca_id,produto_id_peca){
-		// 	var osprodutopeca_qtde = $("#osprodutopeca_qtde_" + osprodutopeca_id).val();
-        //     var clienteconfig_id = $("#clienteconfig_id").val();
-        //     var os_id = $("#os_id").val();
-        //     var os_cobertura = $("#os_cobertura").val();
-        //     if(clienteconfig_id == '11'){
-		// 		os_cobertura = 'ORCAMENTO';
-		// 	}
-        //     var osprodutopeca_cobrar = $("#osprodutopeca_cobrar_" + osprodutopeca_id).val();
-			
-		// 	qtde_reservada = $("#estoque_status_64_" + osprodutopeca_id).val();
-		// 	qtde_laboratorio = $("#estoque_status_68_" + osprodutopeca_id).val();
-		// 	qtde_utilizada_baixada = $("#estoque_status_62_" + osprodutopeca_id).val();
-		// 	qtde_nao_utilizada_baixada = $("#estoque_status_71_" + osprodutopeca_id).val();
-		// 	qtde_defeito_baixada = $("#estoque_status_70_" + osprodutopeca_id).val();
-		// 	estoque_id = $("#estoque_id_" + osprodutopeca_id).val();
-		// 	var produto_id_estoque = $("#produto_id_estoque_" + osprodutopeca_id).val();
-		// 	var estoque_qtde       = $("#estoque_qtde_" + produto_id_estoque).val();
-
-        //     // B2X Moema grava os valores da peÃ§a no AnÃ¡lise
-        //     var osprodutopeca_valor_venda = '';
-        //     var osprodutopeca_desconto = '';
-        //     var osprodutopeca_valor_mao_obra = '';
-        //     if (clienteconfig_id == 123) {
-        //         osprodutopeca_valor_venda = $("#osprodutopeca_valor_venda_" + osprodutopeca_id).val();
-        //         osprodutopeca_desconto = $("#osprodutopeca_desconto_" + osprodutopeca_id).val();
-        //         osprodutopeca_valor_mao_obra = $("#osprodutopeca_valor_mao_obra_" + osprodutopeca_id).val();
-
-        //         if (osprodutopeca_valor_venda == '') {
-        //             osprodutopeca_valor_venda = '0,00';
-        //         } 
-        //         if(osprodutopeca_desconto == '') {
-        //             osprodutopeca_desconto = '0,00';
-        //         }
-        //         if(osprodutopeca_valor_mao_obra == '') {
-        //             osprodutopeca_valor_mao_obra = '0,00';
-        //         }
-        //     }
-
-		// 	//total = parseInt(qtde_reservada) + parseInt(qtde_utilizada_baixada) + parseInt(qtde_laboratorio) + parseInt(qtde_nao_utilizada_baixada) + parseInt(qtde_defeito_baixada);
-		// 	ver = parseInt(osprodutopeca_qtde) - (parseInt(qtde_utilizada_baixada) + parseInt(qtde_laboratorio));
-			
-		// 	/*if(ver < 0){
-
-		// 		alert('PeÃ§a jÃ¡ utilizada!');
-		// 		return;
-
-		// 	}*/
-
-		// 	$.ajax({
-		// 	  type: "POST",
-		// 	  url: 'os_controle_aguarda_analise_acao.php',
-		// 	  data: {acao: 'updt_peca_lista',estoque_id:estoque_id, qtde_nao_utilizada_baixada:qtde_nao_utilizada_baixada ,qtde_reservada:qtde_reservada,qtde_defeito_baixada: qtde_defeito_baixada, qtde_utilizada_baixada:qtde_utilizada_baixada, qtde_laboratorio:qtde_laboratorio,os_cobertura:os_cobertura,produto_id_peca:produto_id_peca, clienteconfig_id:clienteconfig_id, osprodutopeca_id: osprodutopeca_id, osprodutopeca_cobrar:osprodutopeca_cobrar , osprodutopeca_qtde: osprodutopeca_qtde, estoque_id: estoque_id, os_id: os_id, osprodutopeca_valor_venda: osprodutopeca_valor_venda, osprodutopeca_desconto: osprodutopeca_desconto, osprodutopeca_valor_mao_obra: osprodutopeca_valor_mao_obra},
-		// 	  async: false,
-		// 	  success: function(data) {
-		// 	  	//alert(data);
-		// 		getPecaLista();
-		// 	  }
-		// 	});
-		// }
-
-		function updtPecaLista(osprodutopeca_id){
-
-			// var retorno_lista = conferirTabelaVendaLista(osprodutopeca_id);
-
-			$('.modal').show();
-			var erro_valor_peca = false;
-
-			if (osprodutopeca_id != ""){
-				// altera?o de 1 ?nica linha
-				var osprodutopeca_qtde 				= $("#osprodutopeca_qtde_" + osprodutopeca_id).val();
-				var osprodutopeca_valor_compra 		= $("#osprodutopeca_valor_compra_" + osprodutopeca_id).val();
-				var osprodutopeca_valor_venda 		= $("#osprodutopeca_valor_venda_" + osprodutopeca_id).val();
-				var osprodutopeca_valor_mao_obra 	= $("#osprodutopeca_valor_mao_obra_" + osprodutopeca_id).val();
-				var osprodutopeca_cobrar 			= $("#osprodutopeca_cobrar_" + osprodutopeca_id).val();
-				var osprodutopeca_aprovado 			= $("#osprodutopeca_aprovado_" + osprodutopeca_id).val();
-				var osprodutopeca_compra 			= 'N';
-				var osprodutopeca_observacao 		= $("#osprodutopeca_observacao_" + osprodutopeca_id).val();
-				var osprodutopeca_desconto 			= $("#osprodutopeca_desconto_" + osprodutopeca_id).val();
-				var osprodutopeca_servico_adicional = $("#osprodutopeca_servico_adicional_" + osprodutopeca_id).val();
-				var osprodutopeca_valor_venda 		= $("#osprodutopeca_valor_venda_" + osprodutopeca_id).val();
-				var osprodutopeca_custo 			= $("#osprodutopeca_custo_" + osprodutopeca_id).val();
-				var cobrar_peca 					= $("#osprodutopeca_cobrar_" + osprodutopeca_id).val(); 
-
-				var osprodutopeca_valor_compra 		= $("input[nome_campo='valor_gspn_"+osprodutopeca_id+"']").attr('val_campo');
-				osprodutopeca_valor_compra = osprodutopeca_valor_compra.replace('.', ',');//Para ficar no formato onde vai ser salvo
-
-				//Tratamento da regra de 1.8 do valor de venda sobre o valor de compra
-				$("#msg_erro_valor_venda_"+ osprodutopeca_id).hide();
-				
-				if (cobrar_peca == 'S') {
-
-					var venda = osprodutopeca_valor_venda.replace('.', '');
-					var venda = venda.replace(',', '.');
-
-					venda = parseFloat(venda);
-					venda = venda + 0.01;
-
-					if ( (venda / osprodutopeca_custo) < 1.8) {
-						
-						$("#msg_erro_valor_venda_"+ osprodutopeca_id).show();
-						
-						$('.modal').hide();
-						return false;
-					}
-				}
-
-				$.ajax({
-				  type: "POST",
-				  url: 'os_controle_aguarda_orcamento_acao.php',
-				  async: false,
-				  data: {acao: 'updt_peca_lista', osprodutopeca_valor_desconto:osprodutopeca_desconto ,osprodutopeca_id: osprodutopeca_id, osprodutopeca_valor_compra: osprodutopeca_valor_compra, osprodutopeca_valor_venda: osprodutopeca_valor_venda, osprodutopeca_valor_mao_obra: osprodutopeca_valor_mao_obra, osprodutopeca_cobrar: osprodutopeca_cobrar, osprodutopeca_qtde: osprodutopeca_qtde, osprodutopeca_aprovado: osprodutopeca_aprovado, osprodutopeca_compra: osprodutopeca_compra, osprodutopeca_observacao: osprodutopeca_observacao, osprodutopeca_servico_adicional:osprodutopeca_servico_adicional},
-				  success: function(data) {
-				  	$('.modal').hide();
-                    //getPecaLista();
-                    if ($('#clienteconfig_id').val() == 104) {
-                        alert('Favor confirmar a OS para salvar todos os valores!');
-                    }
-				  }
-				});
-			}else{
-				// altera?o de todas as linhas
-				var osprodutopeca_id;
-				$(".osprodutopeca_id").each(function(){
-					osprodutopeca_id = $(this).val();
-					var osprodutopeca_qtde 				= $("#osprodutopeca_qtde_" + osprodutopeca_id).val();
-					var osprodutopeca_valor_compra 		= $("#osprodutopeca_valor_compra_" + osprodutopeca_id).val();
-					var osprodutopeca_valor_venda 		= $("#osprodutopeca_valor_venda_" + osprodutopeca_id).val();
-					var osprodutopeca_valor_mao_obra 	= $("#osprodutopeca_valor_mao_obra_" + osprodutopeca_id).val();
-					var osprodutopeca_cobrar 			= $("#osprodutopeca_cobrar_" + osprodutopeca_id).val();
-					var osprodutopeca_aprovado 			= $("#osprodutopeca_aprovado_" + osprodutopeca_id).val();
-					var osprodutopeca_compra 			= 'N';
-					var osprodutopeca_observacao 		= $("#osprodutopeca_observacao_" + osprodutopeca_id).val();
-					var osprodutopeca_desconto 			= $("#osprodutopeca_desconto_" + osprodutopeca_id).val();
-					var osprodutopeca_servico_adicional = $("#osprodutopeca_servico_adicional_" + osprodutopeca_id).val();
-					var osprodutopeca_custo 			= $("#osprodutopeca_custo_" + osprodutopeca_id).val();
-					var cobrar_peca 					= $("#osprodutopeca_cobrar_" + osprodutopeca_id).val(); 
-
-
-					//Tratamento da regra de 1.8 do valor de venda sobre o valor de compra
-					var erro_valor = false;
-					
-					$("#msg_erro_valor_venda_"+ osprodutopeca_id).hide();
-					var venda = osprodutopeca_valor_venda.replace('.', '');
-					var venda = venda.replace(',', '.');
-
-					venda = parseFloat(venda);
-					venda = venda + 0.01;
-
-					if ( (venda / osprodutopeca_custo) < 1.8) {
-						
-						if (cobrar_peca == 'S') {
-							$("#msg_erro_valor_venda_"+ osprodutopeca_id).show();
-							$('.modal').hide();
-							erro_valor 		= true;
-							erro_valor_peca = true;
-						}						
-					}else{
-						$("#msg_erro_valor_venda_"+ osprodutopeca_id).hide();
-					}
-
-					if (!erro_valor) {
-						$.ajax({
-						  type: "POST",
-						  url: 'os_controle_aguarda_orcamento_acao.php',
-						  async: false,
-						  data: {acao: 'updt_peca_lista',osprodutopeca_valor_desconto:osprodutopeca_desconto , osprodutopeca_id: osprodutopeca_id, osprodutopeca_valor_compra: osprodutopeca_valor_compra, osprodutopeca_valor_venda: osprodutopeca_valor_venda, osprodutopeca_valor_mao_obra: osprodutopeca_valor_mao_obra, osprodutopeca_cobrar: osprodutopeca_cobrar, osprodutopeca_qtde: osprodutopeca_qtde, osprodutopeca_aprovado: osprodutopeca_aprovado, osprodutopeca_compra: osprodutopeca_compra, osprodutopeca_observacao: osprodutopeca_observacao, osprodutopeca_servico_adicional:osprodutopeca_servico_adicional},
-						  success: function(data) {
-						  	$('.modal').hide();
-	                        //getPecaLista();
-	                        if ($('#clienteconfig_id').val() == 104) {
-	                            alert('Favor confirmar a OS para salvar todos os valores!');
-	                        }
-						  }
-						});
-					}
-				});
+		function updtPecaLista(osprodutopeca_id,produto_id_peca){
+			var osprodutopeca_qtde = $("#osprodutopeca_qtde_" + osprodutopeca_id).val();
+            var clienteconfig_id = $("#clienteconfig_id").val();
+            var os_id = $("#os_id").val();
+            var os_cobertura = $("#os_cobertura").val();
+            if(clienteconfig_id == '11'){
+				os_cobertura = 'ORCAMENTO';
 			}
+            var osprodutopeca_cobrar = $("#osprodutopeca_cobrar_" + osprodutopeca_id).val();
+			
+			qtde_reservada = $("#estoque_status_64_" + osprodutopeca_id).val();
+			qtde_laboratorio = $("#estoque_status_68_" + osprodutopeca_id).val();
+			qtde_utilizada_baixada = $("#estoque_status_62_" + osprodutopeca_id).val();
+			qtde_nao_utilizada_baixada = $("#estoque_status_71_" + osprodutopeca_id).val();
+			qtde_defeito_baixada = $("#estoque_status_70_" + osprodutopeca_id).val();
+			estoque_id = $("#estoque_id_" + osprodutopeca_id).val();
+			var produto_id_estoque = $("#produto_id_estoque_" + osprodutopeca_id).val();
+			var estoque_qtde       = $("#estoque_qtde_" + produto_id_estoque).val();
 
-			if (!erro_valor_peca){
+            // B2X Moema grava os valores da peÃ§a no AnÃ¡lise
+            var osprodutopeca_valor_venda = '';
+            var osprodutopeca_desconto = '';
+            var osprodutopeca_valor_mao_obra = '';
+            if (clienteconfig_id == 123) {
+                osprodutopeca_valor_venda = $("#osprodutopeca_valor_venda_" + osprodutopeca_id).val();
+                osprodutopeca_desconto = $("#osprodutopeca_desconto_" + osprodutopeca_id).val();
+                osprodutopeca_valor_mao_obra = $("#osprodutopeca_valor_mao_obra_" + osprodutopeca_id).val();
+
+                if (osprodutopeca_valor_venda == '') {
+                    osprodutopeca_valor_venda = '0,00';
+                } 
+                if(osprodutopeca_desconto == '') {
+                    osprodutopeca_desconto = '0,00';
+                }
+                if(osprodutopeca_valor_mao_obra == '') {
+                    osprodutopeca_valor_mao_obra = '0,00';
+                }
+            }
+
+			//total = parseInt(qtde_reservada) + parseInt(qtde_utilizada_baixada) + parseInt(qtde_laboratorio) + parseInt(qtde_nao_utilizada_baixada) + parseInt(qtde_defeito_baixada);
+			ver = parseInt(osprodutopeca_qtde) - (parseInt(qtde_utilizada_baixada) + parseInt(qtde_laboratorio));
+			
+			/*if(ver < 0){
+
+				alert('PeÃ§a jÃ¡ utilizada!');
+				return;
+
+			}*/
+
+			$.ajax({
+			  type: "POST",
+			  url: 'os_controle_aguarda_analise_acao.php',
+			  data: {acao: 'updt_peca_lista',estoque_id:estoque_id, qtde_nao_utilizada_baixada:qtde_nao_utilizada_baixada ,qtde_reservada:qtde_reservada,qtde_defeito_baixada: qtde_defeito_baixada, qtde_utilizada_baixada:qtde_utilizada_baixada, qtde_laboratorio:qtde_laboratorio,os_cobertura:os_cobertura,produto_id_peca:produto_id_peca, clienteconfig_id:clienteconfig_id, osprodutopeca_id: osprodutopeca_id, osprodutopeca_cobrar:osprodutopeca_cobrar , osprodutopeca_qtde: osprodutopeca_qtde, estoque_id: estoque_id, os_id: os_id, osprodutopeca_valor_venda: osprodutopeca_valor_venda, osprodutopeca_desconto: osprodutopeca_desconto, osprodutopeca_valor_mao_obra: osprodutopeca_valor_mao_obra},
+			  async: false,
+			  success: function(data) {
+			  	//alert(data);
 				getPecaLista();
-			}
+			  }
+			});
 		}
 
 		function getProdutoEmprestimo(){
@@ -1350,7 +991,7 @@ if ($acao == "add"){
 			  success: function(data) {
 			  	if(data !="")
 				laudo_tipo = data;
-			  } 
+			  }
 			});		
 
 			if(laudo_tipo != ""){				
@@ -1359,13 +1000,14 @@ if ($acao == "add"){
 			}	
 		}
 		
+		
 		function getServicoLista(){
 			var cliente_id = $("#cliente_id").val();
 			var clienteconfig_id = $("#clienteconfig_id").val();
 			var os_id = $("#os_id").val();
 			$.ajax({
 			  type: "POST",
-			  url: 'os_controle_aguarda_analise_edicao.php',
+			  url: 'os_controle_reparo_edicao.php',
 			  data: {acao: 'get_servico_lista', cliente_id: cliente_id, clienteconfig_id: clienteconfig_id, os_id: os_id},
 			  async: false,
 			  success: function(data) {
@@ -1400,11 +1042,11 @@ if ($acao == "add"){
 		
 		function updtServicoLista(osservico_id){
 			var osservico_valor = $("#osservico_valor_" + osservico_id).val();
-			var osservico_desconto = $("#osservico_desconto_" + osservico_id).val();
+			var osservico_observacao = $("#osservico_observacao_" + osservico_id).val();
 			$.ajax({
 			  type: "POST",
 			  url: 'os_controle_aguarda_analise_acao.php',
-			  data: {acao: 'updt_servico_lista', osservico_id: osservico_id, osservico_valor: osservico_valor, osservico_desconto: osservico_desconto},
+			  data: {acao: 'updt_servico_lista', osservico_id: osservico_id, osservico_valor: osservico_valor, osservico_observacao: osservico_observacao},
 			  async: false,
 			  success: function(data) {
 				getServicoLista();
@@ -1413,7 +1055,7 @@ if ($acao == "add"){
 		}
 		
 		function excluiServicoLista(osservico_id){
-			if (confirm("<?=fct_get_var('global.php', 'var_confirma_exclusao', $_SESSION["care-br"]["idioma_id"])?>")){
+			//if (confirm("<?=fct_get_var('global.php', 'var_confirma_exclusao', $_SESSION["care-br"]["idioma_id"])?>")){
 				$.ajax({
 				  type: "POST",
 				  url: 'os_controle_aguarda_analise_acao.php',
@@ -1423,8 +1065,9 @@ if ($acao == "add"){
 					getServicoLista();
 				  }
 				});
-			}
+			//}
 		}
+		
 		
 		function setaMotivoExclusivo(tipo_id, motivo_exclusivo){
 			var motivo_exclusivo_contrario;
@@ -1476,7 +1119,6 @@ if ($acao == "add"){
 			  url: 'os_controle_aguarda_analise_edicao.php',
 			  success: function(data) {
 				$("#status_id_novo").html(data);
-				getServicoLista();
 			  }
 			});
 		}
@@ -1521,7 +1163,7 @@ if ($acao == "add"){
 		}	
 
 		function dialogComentario(){
-			// obrigatÃ³rio selecionar ao menos 1 item da lista
+			// obrigatï¿½rio selecionar ao menos 1 item da lista
 			
 			//$.Dialog().close();
 			//$.Dialog.close();
@@ -1600,75 +1242,7 @@ if ($acao == "add"){
 					
 				break;
 			}
-		}
-
-		function getDesconto(desconto) {
-			var os_id = $("#os_id").val();
-			var produto_id = $("#produto_id").val();
-			var clienteconfig_id = $("#clienteconfig_id").val();
-			var os_cobertura = $("#os_cobertura").val();
-			var cliente_id = $("#cliente_id").val();
-			var modelo_consulta = $("#modelo_consulta_peca").val();
-
-			
-			$.ajax({
-				type: "POST",
-				url: 'os_controle_aguarda_analise_edicao.php',
-				data: {
-					acao: 'get_peca_lista',
-					os_id: os_id,
-					produto_id: produto_id,
-					clienteconfig_id: clienteconfig_id,
-					os_cobertura: os_cobertura,
-					desconto: desconto
-				},
-				async: false,
-				success: function(data) {
-					$("#peca_lista").html(data);
-					// getPecaLista();
-					
-					$.ajax({
-						type: "POST",
-						url: 'gspn/acao.php',
-						data: {acao: 'get_peca_lista', os_id: os_id, modelo_consulta: modelo_consulta, cliente_id: cliente_id},
-						async: false,
-						success: function(data) {
-							var retorno = JSON.parse(data);
-							
-							$("#produto_id_peca").html("<option>Selecione...</option>");
-
-							if(retorno.code) { 
-								var pecas = retorno.data;
-
-								$(pecas).each(function(i, v) { 
-									var opt = `<option value="${v.PartsNo}">${v.Location} | ${v.PartsNo} - ${v.PartsDesc}</option>`;
-									$("#produto_id_peca").append(opt);
-								});
-
-							}									
-
-							$("#produto_id_peca").attr("onchange", "addPecaListaCRC()");
-
-							$( "#produto_id_peca" ).combobox({
-								select: function(event, ui) {
-									addPecaListaCRC();
-									getPecaLista();
-									getServicoLista();
-								}
-							});
-						}
-					});
-					
-					// $("#produto_id_peca" ).combobox({
-					// 	select: function(event, ui) {
-					// 		addPecaLista();
-					// 	}
-					// });
-				}
-			});
-			getStatusNovo();
-			return false;
-		}
+		}						
 	</script>
 	
 	<div class="page secondary">
@@ -1691,6 +1265,7 @@ if ($acao == "add"){
 						<input type="hidden" name="os_id" id="os_id" value="<?=$os_id?>" />
 						<input type="hidden" name="produto_id" id="produto_id" value="<?=$dados_cadastro[0]["produto_id"]?>" />
 						<input type="hidden" name="numero_id" id="numero_id" value="<?=$numero_id?>" />
+						<input type="hidden" name="usuario_aprovacao" id="usuario_aprovacao" />
 
 						<fieldset>
                         <legend style="color:black; font-weight: bold">Dados Cliente</legend>
@@ -1863,7 +1438,9 @@ if ($acao == "add"){
 							<div class="span3 campos-form">
 								<label>
                                     <?
-                                        if ($clienteconfig_id == 123 || $clienteconfig_id == 101 || $clienteconfig_id == 110 || $clienteconfig_id == 112 || $clienteconfig_id == 124 || $clienteconfig_id == 133 || $clienteconfig_id == 131 || $clienteconfig_id == 139 || $clienteconfig_id == 141 || (strpos(B2X_SES_OS,"|".$clienteconfig_id."|")>0) ) { 
+                                        //CSP
+                                        if ($clienteconfig_id == 82 ||
+                                        	$clienteconfig_id == 123 || $clienteconfig_id == 101 || $clienteconfig_id == 96 || $clienteconfig_id == 97 || $clienteconfig_id == 93 || $clienteconfig_id == 163 || $clienteconfig_id == 127 || $clienteconfig_id == 168 || $clienteconfig_id == 90 || $clienteconfig_id == 176 || $clienteconfig_id == 178 || $clienteconfig_id == 132 || $clienteconfig_id == 131 || $clienteconfig_id == 170 || $clienteconfig_id == 194 || $clienteconfig_id == 188 || $clienteconfig_id == 186 || $clienteconfig_id == 136 || $clienteconfig_id == 138 || $clienteconfig_id == 204 ) {
                                             echo "Service GSPN";
                                         } else {
                                             fct_get_var('global.php', 'var_os_chamado', $_SESSION["care-br"]["idioma_id"]);
@@ -1875,12 +1452,11 @@ if ($acao == "add"){
 											<?=fct_get_var('global.php', 'var_os_chamado_help', $_SESSION["care-br"]["idioma_id"])?>
 									</div>
 								</label>
-
-								<input type="hidden" id="modelo_consulta_peca" name="modelo_consulta_peca" value="<?=$dados_cadastro[0]["os_produto_codigo"]?>"/>
-
 								<div class="input-control text">
-									<? if($clienteconfig_id == 101 || $clienteconfig_id == 110 || $clienteconfig_id == 112 || $clienteconfig_id == 124 || $clienteconfig_id == 133 || $clienteconfig_id == 123 || $clienteconfig_id == 131 || (strpos(B2X_SES_OS.B2X_CSP_OS,"|".$clienteconfig_id."|")>0) ) {  ?>
-											<input type="text" id="os_chamado_numero" name="os_chamado_numero" value="<?=($dados_cadastro[0]["os_imei2"]  == "" ? $dados_cadastro[0]["os_chamado_numero"] : $dados_cadastro[0]["os_imei2"])?>" disabled />
+                                    <? 
+                                    // CSP
+                                    if($clienteconfig_id == 82 || $clienteconfig_id == 101 || $clienteconfig_id == 96 || $clienteconfig_id == 97 || $clienteconfig_id == 93 || $clienteconfig_id == 163 || $clienteconfig_id == 127 || $clienteconfig_id == 168 || $clienteconfig_id == 90 || $clienteconfig_id == 132 || $clienteconfig_id == 131 || $clienteconfig_id == 170) {  ?>
+											<input type="text" id="os_chamado_numero" name="os_chamado_numero" value="<?=$dados_cadastro[0]["os_imei2"]?>" disabled />
 									<? } else {   ?>
 											<input type="text" id="lista_os" name="lista_os" value="<?=$dados_cadastro[0]["os_chamado_numero"]?>" disabled />
 									<? }  ?>
@@ -1896,18 +1472,6 @@ if ($acao == "add"){
 								</label>
 								<div class="input-control text">
 									<input type="text" id="lista_os" name="lista_os" value="<?=$dados_cadastro[0]["empresa_razao_social_fabricante"]?>" disabled />
-								</div>
-							</div>
-							<div class="span4 campos-form">
-								<label>
-									Modalidade Atendimento
-									<i class="icon-help"></i>
-									<div class="tooltip">
-										Modalidade Atendimento
-									</div>
-								</label>
-								<div class="input-control text">
-									<input type="text" id="tipo_isento_taxa" name="tipo_isento_taxa" value="<?=$dados_cadastro[0]["tipo_isento_taxa"]?>" disabled />
 								</div>
 							</div>
 							<div class="span6 campos-form">
@@ -2229,61 +1793,50 @@ if ($acao == "add"){
 							<?
 						}
 						?>
-						
 						<!-- carregar lista de peÃ§as requeridas aqui -->
 						<div id="peca_lista"></div>
 						<?
-					      $sqlnf='select os_id from tb_prod_nfe where os_id='.$os_id." and ide_natOp = 'Venda de Mercadoria' and status_id<>52";
-					      $resnf=$conn->sql($sqlnf);
-					      $nf='';
-					      if (mysqli_num_rows($resnf)>0){
-					            $nf='NF gerada';
-					      }
-					      if ($nf!=''){}else{
-					      
-					    ?>
-
-
-						<?
-							// opcoes de desconto de acordo com rotinas
-							// desconto de 5%
-							$rotina_link = fct_get_rotina_invisivel(VAR_MENU_CABECALHO, 'geral.php');
-							$acesso_liberado = strpos($rotina_link, "desconto_5");
-							if ($acesso_liberado){
-								?>
-								<button onclick="getDesconto(5);return false;">Desconto de 5%</button>
-								<?
+							$sql = "SELECT DISTINCT a.usuario_id, a.usuario_nome
+										FROM tb_cad_usuario a
+										WHERE a.perfil_id IN (SELECT perfil_id
+																FROM tb_prod_os_planner_tecnico
+																WHERE clienteconfig_id = '$clienteconfig_id')
+										ORDER BY  a.usuario_nome";
+							if($clienteconfig_id=='20' && $os_tipo=='externo' && $os_cobertura='PITZI'){
+								$sql = "SELECT DISTINCT a.usuario_id, a.usuario_nome
+								FROM tb_cad_usuario a
+								WHERE a.perfil_id IN (SELECT perfil_id
+														FROM tb_prod_os_planner_tecnico
+														WHERE clienteconfig_id = '$clienteconfig_id' AND perfil_id='74')
+								ORDER BY  a.usuario_nome";
 							}
+							if (strpos(JMV,"|".$clienteconfig_id."|")>0){
 
-							// desconto de 10%
-							$rotina_link = fct_get_rotina_invisivel(VAR_MENU_CABECALHO, 'geral.php');
-							$acesso_liberado = strpos($rotina_link, "desconto_10");
-							if ($acesso_liberado){
-								?>
-								<button onclick="getDesconto(10);return false;">Desconto de 10%</button>
-								<?
-							}
-
-							// desconto de 15%
-							$rotina_link = fct_get_rotina_invisivel(VAR_MENU_CABECALHO, 'geral.php');
-							$acesso_liberado2 = strpos($rotina_link, "desconto_15");
-							if ($acesso_liberado2){
-								?>
-								<button onclick="getDesconto(15);return false;">Desconto de 15%</button>
-								<?
-							}
-
-							if ($acesso_liberado || $acesso_liberado2) {
-								?>
-								<button onclick="getDesconto('remover');return false;">Remover Desconto</button>
-								<?
-							}
 						?>
-                        <?}?>
-						<!-- carregar lista de peÃ§as requeridas aqui -->
-						<div id="servico_lista" style="display: block!important"></div>
-						<script>getServicoLista();</script>
-												
+						
+						<div class="span6 campos-form">
+							<div class="input-control select">
+								<label class="tecnico_reparo" >
+									Tecnico Reparo Externo
+									<i class="icon-help" title="" alt="tecnico"></i>
+									<div class="tooltip">
+										Tecnico Reparo Externo
+									</div>
+								</label>
+								<select class="tecnico_reparo" id="tecnico_reparo" name="tecnico_reparo">
+									<option value=""></option>
+									<?
+									$result_tecnico = $conn->sql($sql);
+									while($tmp_filtro1 = mysqli_fetch_array($result_tecnico)){
+										?>
+										<option value="<?=$tmp_filtro1["usuario_id"]?>" title="<?=$tmp_filtro1["usuario_nome"]?>" <? if ($tmp_filtro1["usuario_id"] == $dados_cadastro[0]['usuario_tecnico_reparo']) echo "selected"; ?> alt="<?=$tmp_filtro1["usuario_nome"]?>"><?=$tmp_filtro1["usuario_id"].' - '.$tmp_filtro1["usuario_nome"]?></option>
+										<?
+									}
+									?>
+								</select>
+							</div>
+						</div>
+						<?}?>			
 						<div class="row">
 							<?
 							// ------------------------------
@@ -2655,93 +2208,10 @@ if ($acao == "add"){
 								}
 							}
 
-
-
 							if(trim($dados_cadastro[0]['os_produto_retorno_cliente']) == 'Retorno Cliente' && $dados_cadastro[0]["os_produto_serial"] != ''){
 								verifica_reincidencia($os_id, $clienteconfig_id, $dados_cadastro[0]["os_produto_serial"]);
 							}
-							?>	
-
-							</div>
-							Recebimentos Gerados:
-							<?
-							$sql = "SELECT clienteconfig_recebimento_automatico, fluxo_emite_recido_venda, zerar_valores_orcamento_reprovado, empresacliente_id
-							FROM tb_prod_care_cliente_config 
-							WHERE clienteconfig_id = $clienteconfig_id ";
-							$result_recebimento_automativo = $conn->sql($sql);
-							$tmp_recebimento_automativo = mysqli_fetch_array($result_recebimento_automativo);
-
-							$recibo = "<table><thead><tr><td>Parcela</td><td>Descricao</td><td>Valor</td><td>Vencimento</td><td>Forma de Pagamento</td><td><b>Recebido</b></td></tr></thead><tbody>";
-							$sql_buscar_recebimentos = "SELECT * FROM tb_cad_recebimento WHERE os_id='".$os_id."' AND recebimento_situacao != 'cancelado' AND empresa_id = '".$tmp_recebimento_automativo['empresacliente_id']."' AND empresa_id > 0 ORDER BY recebimento_id DESC";
-
-							
-						    $res_buscar_recebimentos = $conn->sql($sql_buscar_recebimentos);
-						    $num_buscar_recebimentos = mysqli_num_rows($res_buscar_recebimentos);
-						    $total_recibo = 0;
-
-						    for($x=1; $x<=$num_buscar_recebimentos; $x++){
-						        $obj_buscar_recebimentos = mysqli_fetch_object($res_buscar_recebimentos);
-						        
-						        $total_recibo += $obj_buscar_recebimentos->recebimento_valor;
-						        
-						        if($obj_buscar_recebimentos->recebimento_valor>0){
-						          $recibo .=  '<tr><td>Parcela: '.$x.'</td><td>Parcela: '.$obj_buscar_recebimentos->recebimento_descricao.'</td><td>'. 'R$'.number_format($obj_buscar_recebimentos->recebimento_valor, 2, ",",".").'</td><td>' . $obj_buscar_recebimentos->recebimento_data_vencimento . '</td><td>'.$obj_buscar_recebimentos->recebimento_forma_pagamento.'</td><td>'.$obj_buscar_recebimentos->recebimento_valor_pago.'</td></tr>';
-						        }
-						    }
-						    if($num_buscar_recebimentos == 0){
-						    	$recibo.= "<tr><td colspan='5'><center>Nenhum Registro Encontrado</center></td></tr>";
-						    }
-						    
-							$recibo .= "</tbody></table>";
-
-							echo $recibo;
-							
-
-
-
-						?>
-						Estornos:
-                        <?
-                         	
-                                    $recibo = "<table><thead><tr><td>Parcela</td><td>Descricao</td><td>Valor</td><td>Vencimento</td><td>Forma de Pagamento</td><td><b>Pago</b></td></tr></thead><tbody>";
-    
-                                    $sql_buscar_pagamentos = "SELECT * FROM tb_cad_pagamento WHERE os_id='".$os_id."' AND pagamento_situacao != 'cancelado' AND empresa_id = '".$tmp_recebimento_automativo['empresacliente_id']."' AND empresa_id > 0 ORDER BY pagamento_id DESC";
-                                    $res_buscar_pagamentos = $conn->sql($sql_buscar_pagamentos);
-                                    $num_buscar_pagamentos = mysqli_num_rows($res_buscar_pagamentos);
-    								
-                                    $total_pagamento = 0;
-
-                                    for($x=1; $x<=$num_buscar_pagamentos; $x++){
-                                        $obj_buscar_pagamentos = mysqli_fetch_object($res_buscar_pagamentos);
-                                        if($obj_buscar_pagamentos->pagamento_valor_pago > 0){
-                                            $total_pagamento += $obj_buscar_pagamentos->pagamento_valor_pago;
-                                        }else{
-                                            // caso recibo seja credito considerar o valor 
-                                            if($obj_buscar_pagamentos->pagamento_forma_pagamento == 'cartao' || $obj_buscar_pagamentos->pagamento_forma_pagamento == 'cheque'){
-                                                $total_pagamento += $obj_buscar_pagamentos->pagamento_valor;
-                                            }
-                                        }
-                                        
-                                        
-                                        if($obj_buscar_pagamentos->pagamento_valor>0){
-                                        $recibo .=  '<tr><td>Parcela: '.$x.'</td><td>Parcela: '.$obj_buscar_pagamentos->pagamento_descricao.'</td><td>'. 'R$'.number_format($obj_buscar_pagamentos->pagamento_valor, 2, ",",".").'</td><td>' . $obj_buscar_pagamentos->pagamento_data_vencimento . '</td><td>'.$obj_buscar_pagamentos->pagamento_forma_pagamento.'</td><td>'.$obj_buscar_pagamentos->pagamento_valor_pago.'</td></tr>';
-                                        }
-                                    }
-
-                                    $total_recibo = $total_recibo - $total_pagamento;
-
-                                    if($num_buscar_recebimentos == 0){
-                                        $recibo.= "<tr><td colspan='5'><center>Nenhum Registro Encontrado</center></td></tr>";
-                                    }
-                                    
-                                    $recibo .= "</tbody></table>";
-                                    echo $recibo;
-                                    
-                                
-
-                                echo "<input type='hidden' id='valor_recebido' value='$total_recibo'/>";
-                                echo 'Valor Recebido/Entrada: <b>'.$total_recibo.'</b></br>';
-                             ?>	
+							?>		
 
 							<div class="span6 campos-form">
 								<label>
@@ -2823,17 +2293,47 @@ if ($acao == "add"){
 	<script>
 		$(document).ready(function() { 
 			$(".os_peca_precisa").val("S");
-			
-			//Comentado, pois o change dispara o getPecaLista() e o mesmo já é chamado pelo getPecasGSPN
-			//$(".os_peca_precisa").change();
-			
+			$(".os_peca_precisa").change();
 			var so = $("#os_chamado_numero").val();
 			var clienteconfig_id = $("#clienteconfig_id").val();
-			var b2x_ses_os="<?=B2X_SES_OS?>";
-
-			if(clienteconfig_id == 101 || clienteconfig_id == 110 || clienteconfig_id == 112 || clienteconfig_id == 124 || clienteconfig_id == 123 || clienteconfig_id == 131 || clienteconfig_id == 133 || clienteconfig_id == 139 || clienteconfig_id == 141 || (b2x_ses_os.indexOf("|"+clienteconfig_id+"|")>0) ) { 
+            // CSP
+			if(clienteconfig_id == 82 || clienteconfig_id == 101 || clienteconfig_id == 96 || clienteconfig_id == 97 || clienteconfig_id == 93 || clienteconfig_id == 127 || clienteconfig_id == 168 || clienteconfig_id == 90 || clienteconfig_id == 163 || clienteconfig_id == 132 || clienteconfig_id == 194 || $clienteconfig_id == 178 || $clienteconfig_id == 188 || $clienteconfig_id == 186 || $clienteconfig_id == 136 ) { 
 				getPecasGSPN();
 			}
+
+			var os_id = $("#lista_os").val();
+			var cliente_id = $("#cliente_id").val();
+
+			$.ajax({
+				type: "POST",
+				data: { acao: "get_so", os_id: os_id, cliente_id: cliente_id, clienteconfig_id: clienteconfig_id },
+				url: 'gspn/acao.php',
+				async: false,
+				success: function(data) {
+					var retorno = JSON.parse(data);
+					var resp = null;
+					
+					if(retorno.job.code == 1) { 
+						resp = retorno;
+						// var void_gspn = resp.job.response.Return.EsModelInfo.WtyException;
+						// var modelo_gspn = resp.job.response.Return.EsModelInfo.Model;
+						var tecnico = resp.job.response.Return.EsScheInfo.EngineerName;
+						console.log(JSON.stringify(retorno, null, 4));
+						// $("#tecnico_reparo_gspn").val(tecnico);
+						// $("#void_reparo").val(void_gspn);
+						// $("#modelo_consulta_peca").val(modelo_gspn);
+
+						if(tecnico != "") { 
+							// $("#tecnico_reparo").val(tecnico);
+							option_tecnico = `<option selected value="${tecnico}">${tecnico}</option>`;
+							$(".os_at").html(option_tecnico);
+							$(".os_at").val(tecnico);
+							$("#tecnico_reparo").prop("disabled", true);
+						}
+
+					}
+				}
+			});
 
 		});
 
@@ -2847,10 +2347,29 @@ if ($acao == "add"){
 			var produto_id = $("#produto_id").val();
 			$("#os_peca_precisa").val("S");
 
-            var b2x_ses_os="<?=B2X_SES_OS?>";
-			// cliente_id sÃ£o iguais para todas as SES, passar o clienteconfig_id
-			if (clienteconfig_id == 110 || clienteconfig_id == 112 || clienteconfig_id == 124 || clienteconfig_id == 123 || clienteconfig_id == 131 || clienteconfig_id == 133 || clienteconfig_id == 139 || (b2x_ses_os.indexOf("|"+clienteconfig_id+"|")>0) )
-				cliente_id = clienteconfig_id;
+            // CSP
+            // ver gspn/acoes.php function getCli($cliente_id)
+            // para referenciar ao cliente ipaas
+            if(clienteconfig_id == 96)
+                cliente_id = 96;
+            if(clienteconfig_id == 194)
+                cliente_id = 194;
+            if(clienteconfig_id == 178)
+                cliente_id = 178;
+            if(clienteconfig_id == 97)
+                cliente_id = 97;
+            if(clienteconfig_id == 168)
+                cliente_id = 168;
+            if(clienteconfig_id == 90)
+                cliente_id = 53;
+            if(clienteconfig_id == 188)
+                cliente_id = 188;
+            if(clienteconfig_id == 186)
+                cliente_id = 186;
+            if(clienteconfig_id == 136 )
+                cliente_id = 136;
+            if(clienteconfig_id == 132 )
+                cliente_id = 132;
 
 			$.ajax({
 				type: "POST",
@@ -2859,56 +2378,23 @@ if ($acao == "add"){
 				success: function(data) {
 					var pecas = JSON.parse(data);					
 					cadPecaGSPN(pecas, produto_id);
-					setTimeout(() => {
-						getPecaLista();
-						getServicoLista();
-						$(".modal").hide();
-					}, 200);
+					getPecaLista();	
+					
+					$(".modal").hide();
 				}
 			});
 		}
 		
 		function cadPecaGSPN(pecas, produto_id) { 
 			var os_id = $("#os_id").val();
-			var os_cobertura = $("#os_cobertura").val();
-			var clienteconfig_id = $("#clienteconfig_id").val();
-			console.dir(pecas);
-			console.dir(produto_id);
-
-			if(pecas == null)
-				return false;
-
-			var modalidade = $('#tipo_isento_taxa').val();
-			var display = $('.radioDisplay:checked');
-			var d = '';
-			if(modalidade == 'Assurant'){
-				if(display.length == 0){
-					alert("Selecione se é display para prosseguir!");
-					return false;
-				}
-				d = display.val();
-			}
 
 			// cadastras as pecas do gspn na OS
 			$(pecas).each(function(i, v) { 
 				$.ajax({
 					type: "POST",
 					url: 'os_controle_aguarda_orcamento_edicao.php',
-					data: {
-						acao: 'cad_peca_gspn', 
-						os_id: os_id, 
-						modelo: v.modelo, 
-						qtd: v.qtd, 
-						produto_id: produto_id, 
-						descricao: v.descricao,
-						os_cobertura: os_cobertura,
-						clienteconfig_id: clienteconfig_id,
-						display: d
-					},
-					success: function(data) { 
-						getPecaLista();
-						
-					}
+					data: {acao: 'cad_peca_gspn', os_id: os_id, modelo: v.modelo, qtd: v.qtd, produto_id: produto_id, descricao: v.descricao },
+					success: function(data) { }
 				});
 			});
 		}
@@ -2921,41 +2407,6 @@ if ($acao == "add_orc_rapido"){
 	header("Location: os_controle_aguarda_orcamento.php?cliente_id=$cliente_id&clienteconfig_id=$clienteconfig_id&os_id=$os_id"); 
 }
 
-if ($acao == "get_produto_externo"){ 
-	$pecas_gspn=$_REQUEST['pecas_gspn'];
-	$produto_id=$_REQUEST['produto_id'];
-	$lista_gspn="";
-
-	$lista_os     = json_decode(json_encode($pecas_gspn), TRUE); 
-	foreach ($lista_os as $k => $v){
-	   if ($lista_gspn==""){
-	   	 $lista_gspn="('";
-	   }		
-	   $lista_gspn.=$v["PartsNo"]."','";
-	    
-	}
-	if ($lista_gspn=="('"){
-        $lista_gspn.="SEMCODIGOS')";
-	}else{
-       $lista_gspn.="')" ;
-	}
-	$sql_pecas_externas="select p.produto_id,p.produto_codigo 
-	from tb_cad_produto_peca pp
-	inner join tb_cad_produto p
-	on pp.produto_id_peca=p.produto_id 
-	where pp.produto_id=".$produto_id." 
-	and p.produto_codigo not in ".$lista_gspn;
-	$res_pecas_extenas=$conn->sql($sql_pecas_externas);
-	while($dados_pecas_extenas=mysqli_fetch_array($res_pecas_extenas)){
-       
-	?>
-	   <option value="<?=$dados_pecas_extenas['produto_id']?>"> <?=$dados_pecas_extenas['produto_codigo']?> - Fora GSPN </option>
-	<?
-    }
-
-
-	
-}
 
 $conn->fechar();
 ?>

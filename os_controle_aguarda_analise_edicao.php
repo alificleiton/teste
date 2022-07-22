@@ -20,27 +20,6 @@ $os_tipo_servico = $_REQUEST["os_tipo_servico"];
 $os_peca_precisa = $_REQUEST["os_peca_precisa"];
 $os_sub_status = trim($_REQUEST["os_sub_status"]);
 $os_cobertura_aux = $os_cobertura;
-$desconto = $_REQUEST["desconto"];
-
-?>
-<style type="text/css">
-	.alert {
-	    padding: 20px;
-	    /*background-color: #f44336;
-	    color: white;*/
-	    opacity: 1;
-	    /*transition: opacity 0.6s;
-	    margin-bottom: 15px;*/
-
-	    color: #004085;
-    	background-color: #cce5ff;
-    	border-color: #b8daff;
-	}
-
-	.alert.info {/*background-color: #2196F3;*/background-color: #cce5ff;}
-</style>
-
-<?php	
 
 $limit = '0,3';
 
@@ -75,8 +54,8 @@ $sql = "SELECT a.*,
 			INNER JOIN tb_prod_perfil_empresa l ON a.empresa_id_fabricante = l.empresa_id AND l.perfil_id = '" . $_SESSION["care-br"]["perfil_id"] . "'
 			INNER JOIN tb_prod_perfil_linha m ON a.linha_id = m.linha_id AND m.perfil_id = '" . $_SESSION["care-br"]["perfil_id"] . "'
             WHERE os_id = '" . $os_id . "'";
-// B2X Moema / Fortaleza / SES
-if ($clienteconfig_id == 101 || $clienteconfig_id == 110 || $clienteconfig_id == 112 || $clienteconfig_id == 123 || $clienteconfig_id == 124 || $clienteconfig_id == 131 || $clienteconfig_id == 133 || (strpos(B2X_SES_OS.B2X_CSP_OS,"|".$clienteconfig_id."|")>0) ) {
+
+if ($clienteconfig_id == 123) {
     $sql = "SELECT a.*,
 			DATEDIFF(NOW(), a.os_data_abertura) AS os_idade,
 			c.idiomastatus_titulo AS status_titulo, c.idiomastatus_descricao AS status_descricao,
@@ -106,22 +85,6 @@ while($tmp_cadastro = mysqli_fetch_array($result_cadastro)){
     $dados_cadastro[] = $tmp_cadastro;
 }
 
-//pesquisa se NF de serviço foi emitida
-$sqlnf='select os_id from tb_prod_nfe where os_id='.$os_id." and ide_natOp = 'Venda de Mercadoria' and status_id<>52";
-$resnf=$conn->sql($sqlnf);
-$nf='';
-if (mysqli_num_rows($resnf)>0){
-    $nf='NF-e de venda gerada. Cancele a nota para editar/inserir item!<br>';
-}
-
-//pesquisa se NF de serviço foi emitida
-$sqlnfs='select os_id from tb_prod_nfe_servico where os_id='.$os_id." and status_id<>52";
-$resnfs=$conn->sql($sqlnfs);
-$nfs='';
-if (mysqli_num_rows($resnfs)>0){
-  $nfs='NFS-e Gerada. Cancele a nota para editar o valor!';
-}
-
 // --------------
 // get_peca_lista
 // --------------
@@ -132,9 +95,8 @@ if ($acao == "get_peca_lista"){
 		$sql = "SELECT (SELECT nf_item.det_prod_vUnCom FROM tb_prod_nfe_item nf_item 
 			INNER JOIN tb_prod_nfe nf
 			ON nf.nfe_id = nf_item.nfe_id
-		and ( nf.clienteconfig_id = '$clienteconfig_id' or nf.clienteconfig_id = 7),
-			(SELECT estoque.estoque_valor_compra FROM tb_prod_estoque estoque WHERE a.produto_id_peca = estoque.produto_id AND estoque.empresacliente_id = (SELECT empresacliente_id FROM tb_prod_care_cliente_config d WHERE d.clienteconfig_id = $clienteconfig_id) ORDER BY estoque.estoque_id DESC limit 1) AS 'valor_unitario_te'
-			WHERE a.produto_id_peca = nf_item.produto_id ORDER BY nf_item.nfe_id DESC limit 1)	AS 'valor_unitario',
+		and ( nf.clienteconfig_id = '".$clienteconfig_id."' or nf.clienteconfig_id = 7 or nf.clienteconfig_id = 190) 
+			 WHERE a.produto_id_peca = nf_item.produto_id ORDER BY nf_item.nfe_id DESC limit 1)	AS 'valor_unitario',
 					a.*,
 					b.produto_codigo,
 					b.linha_id,
@@ -150,16 +112,15 @@ if ($acao == "get_peca_lista"){
 		
 	}else{
         $order = "ORDER BY b.produto_descricao";
-        if ($clienteconfig_id == 101 || $clienteconfig_id == 110 || $clienteconfig_id == 112 || $clienteconfig_id == 123 || $clienteconfig_id == 124 || $clienteconfig_id == 131 || $clienteconfig_id == 133 || (strpos(B2X_SES_OS.B2X_CSP_OS,"|".$clienteconfig_id."|")>0) ) 
+        if ($clienteconfig_id == 123) 
             $order = "ORDER BY a.osprodutopeca_id";
         
 		// obter peças já solicitadas
-		/*$sql = "SELECT (SELECT nf_item.det_prod_vUnCom FROM tb_prod_nfe_item nf_item 
+		$sql = "SELECT (SELECT nf_item.det_prod_vUnCom FROM tb_prod_nfe_item nf_item 
 			INNER JOIN tb_prod_nfe nf
 			ON nf.nfe_id = nf_item.nfe_id
-		and  nf.clienteconfig_id = '$clienteconfig_id' 
+		and  nf.clienteconfig_id = '".$clienteconfig_id."' 
 			 WHERE a.produto_id_peca = nf_item.produto_id ORDER BY nf_item.nfe_id DESC limit 1)	AS 'valor_unitario',
-					(SELECT estoque.estoque_valor_compra FROM tb_prod_estoque estoque WHERE a.produto_id_peca = estoque.produto_id AND estoque.empresacliente_id = (SELECT empresacliente_id FROM tb_prod_care_cliente_config d WHERE d.clienteconfig_id = $clienteconfig_id) ORDER BY estoque.estoque_id DESC limit 1) AS 'valor_unitario_te',
 					a.*,
 					b.produto_codigo,
 					b.linha_id,
@@ -169,21 +130,7 @@ if ($acao == "get_peca_lista"){
 					FROM tb_prod_os_produto_peca a
 					INNER JOIN tb_cad_produto b ON a.produto_id_peca = b.produto_id
 					WHERE a.os_id = '" . $os_id . "' AND a.produto_id = '" . $produto_id . "'
-					$order";*/
-
-		$sql = "SELECT 0 as 'valor_unitario',
-					0 AS 'valor_unitario_te',
-					a.*,
-					b.produto_codigo,
-					b.linha_id,
-					b.produto_valor_fab,
-					b.produto_valor_fabrica_com_ipi,
-					b.produto_titulo AS produto_titulo, b.produto_descricao AS produto_descricao
-					FROM tb_prod_os_produto_peca a
-					INNER JOIN tb_cad_produto b ON a.produto_id_peca = b.produto_id
-					WHERE a.os_id = '" . $os_id . "' AND a.produto_id = '" . $produto_id . "'
-					$order";				
-		//echo $sql;
+					$order";
 		$result_filtro = $conn->sql($sql);
 	}
 
@@ -196,7 +143,7 @@ if ($acao == "get_peca_lista"){
     // AND status.status_titulo<>'Disponivel' <--- Tirar registro Disponivel da tabela da grid
     $rs = $conn->sql($sql);
     //$rows = mysqli_num_rows($rs);
-    while ($tmp_cadastro = mysqli_fetch_array($rs)){
+    while ($tmp_cadastro = mysqli_fetch_array($rs,MYSQL_ASSOC)){
 
         $status[] = $tmp_cadastro;
 
@@ -262,144 +209,7 @@ if ($acao == "get_peca_lista"){
 			// configuração formato moeda
 			$(".numero").maskMoney({decimal:"", thousands:"", precision:0});
             $(".moeda").maskMoney({decimal:",", thousands:".", precision:2});
-
-            $(".valor_venda_item").focusout(function(){
-
-				var num_item 			= $(this).attr('num_item');
-				var valor       		= $(this).val();
-				var valor_tabela_vendas = $("#osprodutopeca_valor_tabela_venda" + num_item).val();
-
-				var valor_tabela_vendas_orig = valor_tabela_vendas;
-
-				valor = valor.replace('.', '');
-				valor = valor.replace(',', '.');
-				valor = parseFloat(valor);
-
-				valor_tabela_vendas  = valor_tabela_vendas.replace('.', '');
-				valor_tabela_vendas  = valor_tabela_vendas.replace(',', '.');
-				valor_tabela_vendas  = parseFloat(valor_tabela_vendas);
-
-				if (valor < valor_tabela_vendas) {
-					
-					//Valor já aplicado pelo cliente e salvo no banco de dados para essa peça
-					var valor_original = $("#valor_venda_" + num_item).val();
-					
-					if (valor_original > 0) {
-						var valor_originalf = $("#valor_venda_" + num_item).attr('valuef');
-						$("#osprodutopeca_valor_venda_" + num_item).val(valor_originalf);	
-					}else{
-						$("#osprodutopeca_valor_venda_" + num_item).val(valor_tabela_vendas_orig);	
-					}
-
-					alert('Erro. Valor de venda abaixo da tabela');
-					return false;
-				}
-
-
-			});
-
-			function validaDesconto(num_item){
-
-				let valor_venda      = $("#osprodutopeca_valor_venda_"+num_item).val();
-				let valor_compra     = $("input[nome_campo='valor_gspn_"+num_item+"']").attr('val_campo');
-				let clienteconfig_id = $("#clienteconfig_id").val();
-				let desconto         = $("#osprodutopeca_desconto_"+num_item).val();
-
-				//Margem de imposto para Fortaleza
-				if(clienteconfig_id == '131' || clienteconfig_id == '136'){ 
-				    var imposto_aplicar = 1.405;
-				
-				//Margem de imposto para demais clientes
-				}else{
-				    var imposto_aplicar = 1.275;
-				}
-
-				desconto     = desconto.replace('.', '');
-				desconto     = desconto.replace(',', '.');
-				desconto     = parseFloat(desconto);
-				
-				valor_compra = parseFloat(valor_compra);
-				
-				valor_venda = valor_venda.replace('.', '');
-				valor_venda = valor_venda.replace(',', '.');
-				valor_venda = parseFloat(valor_venda);
-
-				let compra_com_imposto = (valor_compra * imposto_aplicar) * 1.15;
-
-				let liquido_venda = valor_venda - desconto;
-
-				if( liquido_venda < compra_com_imposto){
-				    alert('Desconto acima do permitido');
-				    $("#osprodutopeca_desconto_"+num_item).val('0,00');
-				}
-
-				console.log({valor_venda:valor_venda, desconto:desconto, liquido_venda:liquido_venda, valor_compra:valor_compra, compra_com_imposto:compra_com_imposto, imposto:imposto_aplicar});
-			}
-
-			$(".desconto_item").keyup(function(){
-
-				let num_item = $(this).attr('num_item');
-				validaDesconto(num_item);
-			});
-
 		});
-
-		function conferirTabelaVendaLista(osprodutopeca_id){ 
-			var produto_id_peca	 	= $(".produto_id_peca_" + osprodutopeca_id).val();
-			var os_id				= $("#os_id").val();
-			var clienteconfig_id 	= $("#clienteconfig_id").val();
-			var valor_venda_70	 	= $("#osprodutopeca_valor_venda_" + osprodutopeca_id).val();
-			var valor_mao_obra	 	= $("#osprodutopeca_valor_mao_obra_" + osprodutopeca_id).val();
-			var valor_banco 		= $("#osprodutopeca_valor_venda_banco_" + osprodutopeca_id).val()
-			var valor_banco_mao		= $("#osprodutopeca_valor_venda_banco_mao_" + osprodutopeca_id).val()
-
-
-			var cliente_id 			=  $("#cliente_id").val();
-			var retorno				= '';
-			/*
-			if(valor_mao_obra){
-				
-				valor_mao_obra = 	parseFloat(valor_mao_obra.replace(",",".",valor_mao_obra))
-			}
-
-			if(valor_venda_70){
-				
-				valor_venda = parseFloat(valor_venda_70.replace(",",".",valor_venda_70));
-			}
-
-			var valor_venda 		=  valor_venda + valor_mao_obra;
-			*/
-			var valor_venda 		= valor_venda_70;
-
-			if(produto_id_peca){
-					
-				$.ajax({
-				type: "POST",
-				data: {acao:'get_tabela_venda',produto_id_peca:produto_id_peca,os_id:os_id,clienteconfig_id:clienteconfig_id,valor_venda:valor_venda,cliente_id:cliente_id,tb_prod_os:'tb_prod_os'},
-				async: false,
-				url: 'os_venda_edicao.php',
-				success: function(data) {
-					if(data == 'nok'){
-						alert("Permitido alterar somente 10% do valor da Venda. Consulte seu Supervisor!");
-						//valor_banco = valor_banco.replace(".",",");
-						valor_banco = valor_banco;
-						$("#osprodutopeca_valor_venda_" + osprodutopeca_id).val(valor_banco);  
-						
-						retorno =  'nok';
-					}
-						retorno = 'ok'
-				}
-				});
-
-			}else{
-				if(valor_banco){
-					valor_banco = valor_banco.replace(".",",");
-				}
-				$("#osprodutopeca_valor_venda_" + osprodutopeca_id).val(valor_banco);
-			}
-
-			return retorno;	
-		}
 	</script>
 
     <style>
@@ -408,56 +218,46 @@ if ($acao == "get_peca_lista"){
             pointer-events: none;
             touch-action: none;
         }
-    </style>    
+    </style>
 	
 	<div class="row">
 		<div class="campos-form">
 			<div class="input-control text">
-				Lista de Peças
-				<?if ($nf!='' || $nfs != ''){?>
-					<div class="alert info">
-				  		<strong>Info!</strong> <?=$nf?> <?=$nfs?>
-					</div>
-				<?php
-				}?> 
-				<table class="striped bordered hovered" style="width: 100%;">
+				Lista de Peças 22
+				<table class="striped bordered hovered" style="width: 98%;">
 					<thead>
 						<tr>
 							<th class="text-center">#</th>
 							<th class="text-center">Código</th>
 							<th class="text-center">Peça</th>
-							<th class="text-center">Valor GSPN</th>
+							<? if ($clienteconfig_id == 136) { ?>
+									<th class="text-center">Valor GSPN</th>
+							<? } ?>
+							<th class="text-center">Valor Fab.</th>
+							<th class="text-center">Valor Unit.</th>
+							<th class="text-center">Vlr c/ IPI</th>
 							<th class="text-center">Qtde para Reparo</th>
 							<th class="text-center">Qtde em Estoque</th>
 							<th class="text-center">Status Peça</th>
                             <?
-                                if ($clienteconfig_id == 101 || $clienteconfig_id == 110 || $clienteconfig_id == 112 || $clienteconfig_id == 123 || $clienteconfig_id == 124 || $clienteconfig_id == 131 || $clienteconfig_id == 133 || (strpos(B2X_SES_OS.B2X_CSP_OS,"|".$clienteconfig_id."|")>0) ) {
+                                if ($clienteconfig_id == 123) {
                                     echo '<th class="text-center">Valor Venda</th>';
                                     echo '<th class="text-center">Desconto</th>';
-                                    // echo '<th class="text-center">M.O.</th>';
+                                    echo '<th class="text-center">M.O.</th>';
                                     echo '<th class="text-center">Total</th>';
                                 }
                                 ?>
                             <th class="text-center">Cobrar</th>
-                            <th class="text-center">Display</th>
 							<th class="text-center"></th>
 						</tr>
 					</thead>
 					<tbody>
 						<?
-						$cont_peca            = 0;
-						$cont_total           = 0;
-						$mo                   = 0;
-						$total_valor_unitario = 0;
-						$num_item 			  = 0;
-
+						$cont_peca = 0;
+                        $cont_total = 0;
+                        $mo = 0;
 						while($tmp_filtro = mysqli_fetch_array($result_filtro)){
-
-							$num_item ++;
-							
 							$os_cobertura = $os_cobertura_aux;
-							$valor_mao_obra = $tmp_filtro["osprodutopeca_valor_mao_obra"];
-							
 							//TIPO DE VERIFICAÇÃO DIFERENTE DE ESTOQUE PARA DETERMINADA EMPRESA QUE NAO UTILIZA COBERTURA
 							if(empty($os_cobertura)){
 								if ($tmp_filtro["osprodutopeca_cobrar"] == "N"){
@@ -466,14 +266,11 @@ if ($acao == "get_peca_lista"){
 									$os_cobertura = 'ORCAMENTO';
 								}
 							}
-							
-							if ($clienteconfig_id == 101 || $clienteconfig_id == 110 || $clienteconfig_id == 112 || $clienteconfig_id == 123 || $clienteconfig_id == 124 || $clienteconfig_id == 131 || $clienteconfig_id == 133 || (strpos(B2X_SES_OS.B2X_CSP_OS,"|".$clienteconfig_id."|")>0) ) {
-								$os_cobertura = $_REQUEST['os_cobertura'];
-							}
 
 							$categoria_id= get_categoria_estoque($clienteconfig_id,$tmp_filtro["linha_id"],$os_cobertura);
 							$estoque_id  = get_estoqueID($tmp_filtro["produto_id_peca"],$categoria_id);
 							$qtd_estoque = get_qtd_estoque($clienteconfig_id,$tmp_filtro["linha_id"],$tmp_filtro["produto_id_peca"],$os_cobertura);
+							
 							
 							?>
 							<tr>
@@ -487,7 +284,7 @@ if ($acao == "get_peca_lista"){
 								<td>
                                     <?
                                         echo $tmp_filtro["produto_descricao"];
-                                        if ($clienteconfig_id == 101 || $clienteconfig_id == 110 || $clienteconfig_id == 112 || $clienteconfig_id == 123 || $clienteconfig_id == 124 || $clienteconfig_id == 131 || $clienteconfig_id == 133 || (strpos(B2X_SES_OS.B2X_CSP_OS,"|".$clienteconfig_id."|")>0) ) {
+                                        if ($clienteconfig_id == 123) {
                                             if ($tmp_filtro["osprodutopeca_complementar"] == 'S') {
                                                 $complementar = 'Peça é complementar';
                                                 echo "<br><b>$complementar</b>";
@@ -495,231 +292,48 @@ if ($acao == "get_peca_lista"){
                                         }
                                     ?>
                                 </td>
-								<td>
-									<div class="input-control text">
-										<?php 
-												// $tmp_filtro["valor_unitario_te"] = 0;
-												// if ($tmp_filtro["valor_unitario_te"] == 0) {
-												
-												$sql 			 = "SELECT cliente_id, empresacliente_id FROM tb_prod_care_cliente_config WHERE clienteconfig_id = $clienteconfig_id";
-												$res_cliente 	 = $conn->getData($sql);
-												$produto_id_peca = $tmp_filtro["produto_id_peca"];
-												
-												$sql 		= "SELECT id, produto_valor_compra FROM tb_cad_produto_gspn WHERE cliente_id = {$res_cliente[0]['cliente_id']} AND empresacliente_id = {$res_cliente[0]['empresacliente_id']} AND produto_id = $produto_id_peca";
-												$res 		= $conn->getData($sql);
-												
-												/*
-												* CASO EXISTA PREÇO NA tb_cad_produto_gspn ELE PREVALECE SOBRE O PREÇO DO ESTOQUE
-												*/
-												if (!empty($res[0]['produto_valor_compra']) && $res[0]['produto_valor_compra'] > 0) {
-													$tmp_filtro["valor_unitario_te"] = $res[0]['produto_valor_compra'];
-												}
-												//
 
-												$total_valor_unitario = $total_valor_unitario + $tmp_filtro["valor_unitario_te"];
+                                <? if ($clienteconfig_id == 136) { ?>
+	                                <td>
+	                                	<?php 
+													 													
+													$sql 			 = "SELECT cliente_id, empresacliente_id FROM tb_prod_care_cliente_config WHERE clienteconfig_id = $clienteconfig_id";
+													$res_cliente 	 = $conn->getData($sql);
+													$produto_codigo = $tmp_filtro["produto_codigo"];
+													$empresacliente_id_gspn = $res_cliente[0]['empresacliente_id'];
 
-												$cobertura 	= trim(substr($os_cobertura, 0, 3));
-												
-												switch ($cobertura) {
-													case 'HHP':
-														$linha_id = 3;
-														break;
-													case 'NPC':
-														$linha_id = 5;
-														break;
-													case 'DTV':
-														$linha_id = 2;
-														break;
-													case 'HA':
-														$linha_id = 1;
-														break;
-													default:
-														$linha_id = 3;
-														break;
-												}
-
-												//Caso EXISTA produto cadastrado na tabela Produtos x GSPN
-												if (!empty($res[0]['produto_valor_compra']) && $res[0]['produto_valor_compra'] > 0) {
-													
-													$valor_venda = $res[0]['produto_valor_compra'] * 1.8;
-
-													//Arredonda pra cima 1.59 vira 2.00 por exemplo
-													$valor_venda = ceil($valor_venda);
-
-													$cobertura = trim(substr($os_cobertura, 0, 3));
-													
-													switch ($cobertura) {
-														case 'HHP':
-															$linha_id = 3;
-															break;
-														case 'NPC':
-															$linha_id = 5;
-															break;
-														case 'DTV':
-															$linha_id = 2;
-															break;
-														case 'HA':
-															$linha_id = 1;
-															break;
-														default:
-															$linha_id = 3;
-															break;
-													}
-													
-													$sql = "SELECT tabela_produto_id FROM tb_cad_tabela_produto_venda WHERE 
-																cobertura = '$cobertura' AND
-																cliente_id = {$res_cliente[0]['cliente_id']} AND
-																empresacliente_id = {$res_cliente[0]['empresacliente_id']} AND
-																produto_id = $produto_id_peca AND
-																linha_id = $linha_id";
-
-													$tmp = $conn->sql($sql);
-
-													if (mysqli_num_rows($tmp) == 0) {
-														
-														$sql = "INSERT INTO tb_cad_tabela_produto_venda SET
-															cobertura = '$cobertura',
-															cliente_id = {$res_cliente[0]['cliente_id']},
-															empresacliente_id = {$res_cliente[0]['empresacliente_id']},
-															produto_id = $produto_id_peca,
-															linha_id = $linha_id,
-															valor_venda = $valor_venda";
-														$conn->sql($sql);
-
-														$sql = "INSERT INTO tb_cad_markup_automatico SET
-															cliente_id = {$res_cliente[0]['cliente_id']},
-															empresacliente_id = {$res_cliente[0]['empresacliente_id']},
-															produto_id = $produto_id_peca,
-															valor_compra = {$res[0]['produto_valor_compra']},
-															valor_venda = $valor_venda,
-															data = NOW()";
-														$conn->sql($sql);
-													}
-
-												//Caso NÂO existaproduto cadastrado na tabela Produtos x GSPN
-												} elseif ($res[0]['produto_valor_compra'] == 0 || empty($res[0]['produto_valor_compra'])) {
-													
-													// Verificar no GSPN o preço de compra
-													switch ($res_cliente[0]['empresacliente_id']) {
-														case '900':
-															$cli = 'b2xMoema';
-															break;
-														case '907':
-															$cli = 'cspFortaleza';
-															break;
-														case '883':
-															$cli = 'b2xfranca';
-															break;
-														case '895':
-															$cli = 'b2xBauru';
-															break;
-														case '910':
-															$cli = 'b2xMorumbi';
-															break;
-														case '893':
-															$cli = 'b2xShoppingD';
-															break;
-														case '909':
-															$cli = 'b2xUberlandiaShopping';
-															break;
-													}
-
-													include  "gspn/ipaas/config/auto_load.php";
-
-													$op = new ServiceOrder(new Client($cli));
-
-													$data["IsSihpAddr"]["AddressFlag"] = "Y";
-													$data["IsSihpAddr"]["CustomerName"] = "B2X CARE SERVICOS TECNOLOGICOS LTDA";
-													$data["IsSihpAddr"]["Street"] = "ALAMEDA DOS MARACATINS";
-													$data["IsSihpAddr"]["City"] = "Sao Paulo";
-													$data["IsSihpAddr"]["PostalCode"] = "04089000";
-													$data["IsSihpAddr"]["State"] = "SP";
-													$data["IsSihpAddr"]["PhoneNumber"] = "31043667";
-													$data["IsSihpAddr"]["EmailAddress"] = "";
-													$data["IvPoType"] = '5';
-													$data["IvShippingMethod"] = '1';
-													$data["IvPONo"] = '123';
-
-													$data2["PartsNo"] 		 = $tmp_filtro["produto_codigo"];
-													$data2["PartsQty"] 		 = "1";
-													$data2["ServiceOrderNo"] = "";
-													
-													$data["ItPoItem"][0] = $data2;
-													$response = $op->checkPO($data);
-													$response = json_decode(json_encode($response), TRUE);
-
-													//Caso não tenha resposta, troca o tipo de PO e consulta novamente
-													$code = $response['response']['Return']['EvRetCode'];
-												    
-												    if ($code != '200') {
-												        $data["IvPoType"] = '1';
-												        $response         = $op->checkPO($data);
-												        $response         = json_decode(json_encode($response), TRUE);
+													$sql 		= "SELECT preco_gspn_valor  FROM tb_cad_preco_gspn_variacao WHERE produto_gspn_codigo = '$produto_codigo' and empresacliente_id = $empresacliente_id_gspn";
+													$res 		= $conn->getData($sql);
+													if (empty($res[0]['produto_gspn_valor']) ){
+														$tmp_filtro["valor_unitario_te"]=0;
+													}else{
+                                                        $tmp_filtro["valor_unitario_te"] = $res[0]['produto_gspn_valor'];
 												    }
+													
+												
 
-												    if (isset($response['response']['EtPoResult']['results'][0])) { 
-														
-														$UnitPrice 	 = $response['response']['EtPoResult']['results'][0]['UnitPrice'];
-														$Amount 	 = $response['response']['EtPoResult']['results'][0]['Amount'];
-														$valor_venda = $UnitPrice * 1.8;
 
-														//Arredonda pra cima 1.59 vira 2.00 por exemplo
-														$valor_venda = ceil($valor_venda);
-											
-														$sqlUp = "UPDATE 
-																	tb_cad_produto_gspn 
-																		SET
-																			produto_valor_compra = '$UnitPrice',
-																			data_atualizacao = NOW()
-																	WHERE 
-																		id = '{$res[0]['id']}'";
-														$conn->sql($sqlUp);
-
-														$res[0]['produto_valor_compra'] = $UnitPrice;
-
-														$sql = "SELECT tabela_produto_id FROM tb_cad_tabela_produto_venda WHERE 
-																cobertura = '$cobertura' AND
-																cliente_id = {$res_cliente[0]['cliente_id']} AND
-																empresacliente_id = {$res_cliente[0]['empresacliente_id']} AND
-																produto_id = $produto_id_peca AND
-																linha_id = $linha_id";
-														
-														$tmp = $conn->sql($sql);
-														
-														if (mysqli_num_rows($tmp) == 0) {
-															
-															$sql = "INSERT INTO tb_cad_tabela_produto_venda SET
-																cobertura = '$cobertura',
-																cliente_id = {$res_cliente[0]['cliente_id']},
-																empresacliente_id = {$res_cliente[0]['empresacliente_id']},
-																produto_id = $produto_id_peca,
-																linha_id = $linha_id,
-																valor_venda = $valor_venda";
-															$conn->sql($sql);
-
-															$sql = "INSERT INTO tb_cad_markup_automatico SET
-																cliente_id = {$res_cliente[0]['cliente_id']},
-																empresacliente_id = {$res_cliente[0]['empresacliente_id']},
-																produto_id = $produto_id_peca,
-																valor_compra = {$res[0]['produto_valor_compra']},
-																valor_venda = $valor_venda,
-																data = NOW()";
-															$conn->sql($sql);
-														}
-													}
-												}
-
-												$valor_venda_calculado = $valor_venda;
-
-											// }
 										?>
-										<input type="text" id="valor_nf_ssg" name="valor_nf_ssg" nome_campo='<?php echo "valor_gspn_".$tmp_filtro["osprodutopeca_id"]; ?>' val_campo="<?php echo $tmp_filtro["valor_unitario_te"] ?>" value="<?=number_format($tmp_filtro["valor_unitario_te"], 2, ',', '.')?>" style="width: 70px; text-align:right;" disabled />
+										<input type="text" id="valor_nf_ssg" name="valor_nf_ssg" value="<?=number_format($tmp_filtro["valor_unitario_te"], 2, ',', '.')?>" style="width: 70px; text-align:right;" disabled />
 										<input type="hidden" id='osprodutopeca_custo_<?=$tmp_filtro["osprodutopeca_id"]?>' value='<?=$tmp_filtro["valor_unitario_te"]?>' />
-									</div>
-								</td>
+	                                </td>
+                            	<? } ?>
+								<td><?=number_format($tmp_filtro["produto_valor_fab"], 2, ',', '')?></td>
+								<?
+								if($clienteconfig_id=='20'){
+								?>
+									<td><?=number_format($tmp_filtro["produto_valor_fabrica_com_ipi"], 2, ',', '')?></td>
+								<?
+								}else{
+								?>
+									<td><?=number_format($tmp_filtro["valor_unitario"], 2, ',', '')?></td>	
+								<?
+								}
+								?>
+								<td><?=number_format($tmp_filtro["produto_valor_fabrica_com_ipi"], 2, ',', '')?></td>
 								<td class="text-center">
 									<div class="input-control text">
-										<input <?if ($nf!='' || $nfs!='') echo 'disabled="true" '?> class="numero" type="text" id="osprodutopeca_qtde_<?=$tmp_filtro["osprodutopeca_id"]?>" name="osprodutopeca_qtde_<?=$tmp_filtro["osprodutopeca_id"]?>" value="<?=$tmp_filtro["osprodutopeca_qtde"]?>" style="width: 50px;" />
+										<input class="numero" type="text" id="osprodutopeca_qtde_<?=$tmp_filtro["osprodutopeca_id"]?>" name="osprodutopeca_qtde_<?=$tmp_filtro["osprodutopeca_id"]?>" value="<?=$tmp_filtro["osprodutopeca_qtde"]?>" style="width: 50px;" />
 									</div>
 								</td>
 								<td class="text-center">
@@ -728,6 +342,8 @@ if ($acao == "get_peca_lista"){
 						
 										</div>
 								</td>
+
+
 
 								<td>
 									
@@ -784,8 +400,8 @@ if ($acao == "get_peca_lista"){
                                     $readonly = '';
                                     $sim = fct_get_var('global.php', 'var_sim', $_SESSION["care-br"]["idioma_id"]);
                                     $nao = fct_get_var('global.php', 'var_nao', $_SESSION["care-br"]["idioma_id"]);
-                                    // B2X Moema / Fortaleza / SES  grava os valores da peça no Análise, e M.O. sempre será 150 reais na primeira peça
-                                    if ($clienteconfig_id == 101 || $clienteconfig_id == 110 || $clienteconfig_id == 112 || $clienteconfig_id == 123 || $clienteconfig_id == 124 || $clienteconfig_id == 131 || $clienteconfig_id == 133 || (strpos(B2X_SES_OS.B2X_CSP_OS,"|".$clienteconfig_id."|")>0) ) {
+                                    // B2X Moema grava os valores da peça no Análise, e M.O. sempre será 150 reais na primeira peça
+                                    if ($clienteconfig_id == 123) {
                                         $valor_venda = $tmp_filtro['osprodutopeca_valor_venda'];
                                         $cobertura = $_REQUEST["os_cobertura"];
                                         $produto_id_peca = $tmp_filtro["produto_id_peca"];
@@ -795,85 +411,26 @@ if ($acao == "get_peca_lista"){
                                             $tmp = mysqli_fetch_array($result);
                                             $empresacliente_id = $tmp['empresacliente_id'];
                                             $cliente_id = $tmp['cliente_id'];
-                                            
-
-                                            $cobertura_trim = substr($cobertura, 0, 3);
-                                            
-                                            //Busca o valor de venda na tabela de cadastro
+                                            $cobertura = substr($cobertura, 0, 3);
                                             $sql = "SELECT valor_venda 
                                                 FROM tb_cad_tabela_produto_venda 
                                                 WHERE cliente_id = '$cliente_id' 
                                                 AND empresacliente_id = '$empresacliente_id' 
-                                                AND (cobertura = '$cobertura_trim' OR cobertura = '$cobertura')
+                                                AND cobertura = '$cobertura'
                                                 AND produto_id = '" . $tmp_filtro["produto_id_peca"] . "'";
                                             $result = $conn->sql($sql);
-											$tmp = mysqli_fetch_array($result);
-											
-											//Se não achar o valor de venda, busca sem usar a cobertura no filtro
-											if (is_null($tmp)) {
-												 
-												switch ($cobertura_trim) {
-													case 'HHP':
-														$linha_id = 3;
-														break;
-													case 'NPC':
-														$linha_id = 5;
-														break;
-													case 'DTV':
-														$linha_id = 2;
-														break;
-													case 'HA':
-														$linha_id = 1;
-													break;
-												}
-
-												$sql = "SELECT * 
-	                                                FROM tb_cad_tabela_produto_venda 
-	                                                WHERE cliente_id = '$cliente_id' 
-	                                                AND empresacliente_id = '$empresacliente_id'
-	                                                AND linha_id = '$linha_id'
-	                                                AND produto_id = '" . $tmp_filtro["produto_id_peca"] . "'";
-	                                            $result = $conn->sql($sql);
-												$tmp 	= mysqli_fetch_array($result);
-
-												//Se encontrou o valor, atualiza a cobertura
-												if (!is_null($tmp)) {
-													
-													//Pega os valores
-													$tabela_produto_id = $tmp['tabela_produto_id'];
-													$valor_venda 	   = $tmp['valor_venda'];
-
-													//Atualiza a cobertura
-													$sqlUp = "UPDATE 
-																tb_cad_tabela_produto_venda 
-															  SET
-																cobertura = '$cobertura'
-															  WHERE 
-																tabela_produto_id = '$tabela_produto_id'";
-													$conn->sql($sqlUp);
-												}
-											}
-											
-											$tmp['valor_venda'] . '<br>';
+                                            $tmp = mysqli_fetch_array($result);
                                             $valor_venda = $tmp['valor_venda'];
-											// $valor_venda = str_replace('.', ',', $valor_venda);
-										}
-										
-										if ($tmp_filtro["osprodutopeca_cobrar"] == "S") {
-											$total_venda += $tmp_filtro['osprodutopeca_valor_venda'] * $tmp_filtro["osprodutopeca_qtde"];
-											$total_desconto += $tmp_filtro['osprodutopeca_valor_desconto'];
-											// $total_mao_obra += $tmp_filtro['osprodutopeca_valor_mao_obra'];
-										}
+                                            $valor_venda = str_replace('.', ',', $valor_venda);
+                                        }
+                                        $total_venda += $tmp_filtro['osprodutopeca_valor_venda'];
+                                        $total_desconto += $tmp_filtro['osprodutopeca_valor_desconto'];
+                                        $total_mao_obra += $tmp_filtro['osprodutopeca_valor_mao_obra'];
 
                                         if (($tmp_filtro['osprodutopeca_valor_mao_obra'] == '0.00' || empty($tmp_filtro['osprodutopeca_valor_mao_obra'])) && $mo == 0 && $produto_id_peca != 157066 && $produto_id_peca != 164976 && $produto_id_peca != 165440 && $produto_id_peca != 166344 && $produto_id_peca != 167730 && $produto_id_peca != 168534 && $produto_id_peca != 168535 && $produto_id_peca != 170922 && $produto_id_peca != 170965 && $produto_id_peca != 170966 && $produto_id_peca != 170996 && $produto_id_peca != 171139 && $produto_id_peca != 171980 && $produto_id_peca != 171995 && $produto_id_peca != 172332 && $produto_id_peca != 172344 && $produto_id_peca != 172345 && $produto_id_peca != 172966 && $produto_id_peca != 177046 && $produto_id_peca != 177612 && $produto_id_peca != 177613 && $produto_id_peca != 179748 && $produto_id_peca != 206556 && $produto_id_peca != 209091 && $produto_id_peca != 282032 && $produto_id_peca != 282611 && $produto_id_peca != 283200 && $produto_id_peca != 284922 && $produto_id_peca != 284927 && $produto_id_peca != 284930 && $produto_id_peca != 285950 && $produto_id_peca != 286818 && $produto_id_peca != 287135 && $produto_id_peca != 289315 && $produto_id_peca != 289356 && $produto_id_peca != 290770 && $produto_id_peca != 290988 && $produto_id_peca != 291365 && $produto_id_peca != 304500 && $produto_id_peca != 306888 && $produto_id_peca != 306891 && $produto_id_peca != 306892 && $produto_id_peca != 306893 && $produto_id_peca != 306915 && $produto_id_peca != 306916 && $produto_id_peca != 306917 && $produto_id_peca != 306918 && $produto_id_peca != 306919 && $produto_id_peca != 306927 && $produto_id_peca != 313691 && $produto_id_peca != 313692 && $produto_id_peca != 313889 && $produto_id_peca != 314501 && $produto_id_peca != 314502 && $produto_id_peca != 314503) {
-											if(($_REQUEST["os_cobertura"] == "DTV - OW" || $_REQUEST["os_cobertura"] == "NPC - OW") && ($clienteconfig_id == 123 || $clienteconfig_id == 131 || (strpos(B2X_CSP_OS,"|".$clienteconfig_id."|")>0) )){
-												$tmp_filtro['osprodutopeca_valor_mao_obra'] = '250.00';
-											}
-											else{
-												$tmp_filtro['osprodutopeca_valor_mao_obra'] = '150.00';
-											}
+                                                $tmp_filtro['osprodutopeca_valor_mao_obra'] = '150.00';
                                         } elseif ($produto_id_peca == 157066 || $produto_id_peca == 164976 || $produto_id_peca == 165440 || $produto_id_peca == 166344 || $produto_id_peca == 167730 || $produto_id_peca == 168534 || $produto_id_peca == 168535 || $produto_id_peca == 170922 || $produto_id_peca == 170965 || $produto_id_peca == 170966 || $produto_id_peca == 170996 || $produto_id_peca == 171139 || $produto_id_peca == 171980 || $produto_id_peca == 171995 || $produto_id_peca == 172332 || $produto_id_peca == 172344 || $produto_id_peca == 172345 || $produto_id_peca == 172966 || $produto_id_peca == 177046 || $produto_id_peca == 177612 || $produto_id_peca == 177613 || $produto_id_peca == 179748 || $produto_id_peca == 206556 || $produto_id_peca == 209091 || $produto_id_peca == 282032 || $produto_id_peca == 282611 || $produto_id_peca == 283200 || $produto_id_peca == 284922 || $produto_id_peca == 284927 || $produto_id_peca == 284930 || $produto_id_peca == 285950 || $produto_id_peca == 286818 || $produto_id_peca == 287135 || $produto_id_peca == 289315 || $produto_id_peca == 289356 || $produto_id_peca == 290770 || $produto_id_peca == 290988 || $produto_id_peca == 291365 || $produto_id_peca == 304500 || $produto_id_peca == 306888 || $produto_id_peca == 306891 || $produto_id_peca == 306892 || $produto_id_peca == 306893 || $produto_id_peca == 306915 || $produto_id_peca == 306916 || $produto_id_peca == 306917 || $produto_id_peca == 306918 || $produto_id_peca == 306919 || $produto_id_peca == 306927 || $produto_id_peca == 313691 || $produto_id_peca == 313692 || $produto_id_peca == 313889 || $produto_id_peca == 314501 || $produto_id_peca == 314502 || $produto_id_peca == 314503) {
-											$tmp_filtro['osprodutopeca_valor_mao_obra'] = '100.00';
+                                                $tmp_filtro['osprodutopeca_valor_mao_obra'] = '100.00';
                                         }
 
                                         $rotina_link = fct_get_rotina_invisivel(VAR_MENU_CABECALHO, 'produto_tabela_controle.php', $os_id);
@@ -883,101 +440,31 @@ if ($acao == "get_peca_lista"){
                                         if (!$acesso_liberado){
 											$retorno = 'readonly="true"';
 										}
-
-										if ($clienteconfig_id == 123 || $clienteconfig_id == 131 || (strpos(B2X_CSP_OS,"|".$clienteconfig_id."|")>0) ) {
-											if ($desconto) {
-												$tmp_filtro['osprodutopeca_valor_desconto'] = ($desconto / 100) * $valor_venda;
-											}
-										} elseif ($desconto == 'remover') {
-											$tmp_filtro['osprodutopeca_valor_desconto'] = 0;
-										}
-
-
-										$sql_empresaclienteid= "Select cliente_id, empresacliente_id from tb_prod_care_cliente_config where clienteconfig_id='".$clienteconfig_id."'";
-										$res_empresaclienteid = $conn->sql($sql_empresaclienteid);
-										while($dados_empresaclienteid = mysqli_fetch_array($res_empresaclienteid)){
-											$empresacliente_id = $dados_empresaclienteid['empresacliente_id'];
-											$cliente_id = $dados_empresaclienteid['cliente_id'];
-                                        }
-
-										if ($clienteconfig_id == 101 || $clienteconfig_id == 110 || $clienteconfig_id == 112 || $clienteconfig_id == 123 || $clienteconfig_id == 124 || $clienteconfig_id == 131 || $clienteconfig_id == 133 || (strpos(B2X_SES_OS.B2X_CSP_OS,"|".$clienteconfig_id."|")>0) ) {
-                                            $cobertura = substr($os_cobertura, 0, 3);
-                                        } else {
-                                            $cobertura = $os_cobertura;
-                                        }
-
-										$sql_preco_venda = "SELECT valor_venda FROM tb_cad_tabela_produto_venda  WHERE produto_id ='".$tmp_filtro["produto_id_peca"]."'
-										and cobertura = '". $cobertura ."' and cliente_id = '".$cliente_id."' and empresacliente_id = '".$empresacliente_id."'";
-
-										$res_preco_venda = $conn->sql($sql_preco_venda);
-										$retorno= '';
-										$valor_venda_tabela = '';
-
-										if(mysqli_num_rows($res_preco_venda)> 0){
-											while($dados_tabela = mysqli_fetch_array($res_preco_venda)){
-												$valor_venda_tabela = $dados_tabela['valor_venda'];
-											}
-										}
-
                                         ?>
                                         <td>
                                             <div class="input-control text">
-                                                <input 
-	                                                <?if ($nf!='' || $nfs!='') echo 'disabled="true" '?>  
-	                                                class="moeda valor_venda_item valid" 
-	                                                type="text" 
-	                                                maxlength="9" 
-	                                                id="osprodutopeca_valor_venda_<?=$tmp_filtro["osprodutopeca_id"]?>" 
-	                                                name="osprodutopeca_valor_venda_<?=$tmp_filtro["osprodutopeca_id"]?>" 
-	                                                value="<?=number_format($valor_venda, 2, ',', '.')?>" 
-	                                                num_item='<?=$tmp_filtro["osprodutopeca_id"]?>'
-	                                                <?=$retorno?>
-                                                >
+                                                <input class="moeda valid" type="text" maxlength="9" id="osprodutopeca_valor_venda_<?=$tmp_filtro["osprodutopeca_id"]?>" name="osprodutopeca_valor_venda_<?=$tmp_filtro["osprodutopeca_id"]?>" value="<?=number_format($valor_venda, 2, ',', '.')?>" <?=$retorno?>>
                                                 </input>
-												<input 
-													type="hidden" 
-													name="valor_venda_<?=$tmp_filtro["osprodutopeca_id"]?>" 
-													id="valor_venda_<?=$tmp_filtro["osprodutopeca_id"]?>" 
-													value="<?=$tmp_filtro['osprodutopeca_valor_venda']?>"
-													valuef="<?=number_format($tmp_filtro['osprodutopeca_valor_venda'], 2, ',', '.');?>"
-												>
-
-												<span id='msg_erro_valor_venda_<?=$tmp_filtro["osprodutopeca_id"]?>' class='msg_erro_valor_venda' style="display: none; color: red; font-size: 10pt;">Erro. Valor de venda inferior a 80%</span>
-
-													<input type="hidden" name="osprodutopeca_valor_tabela_venda<?=$tmp_filtro["osprodutopeca_id"]?>" id="osprodutopeca_valor_tabela_venda<?=$tmp_filtro["osprodutopeca_id"]?>" value="<?=number_format($valor_venda_tabela, 2, ',', '.')?>">
-
                                             </div>
                                         </td>
 
                                         <td>
                                             <div class="input-control text">
-                                                <input 
-                                                	<?if ($nf!='' || $nfs!='') echo 'disabled="true" '?> 
-                                                	class="moeda desconto_item valid" 
-                                                	type="text" 
-                                                	maxlength="9" 
-                                                	id="osprodutopeca_desconto_<?=$tmp_filtro["osprodutopeca_id"]?>" 
-                                                	name="osprodutopeca_desconto_<?=$tmp_filtro["osprodutopeca_id"]?>" 
-                                                	value="<?=number_format($tmp_filtro['osprodutopeca_valor_desconto'], 2, ',', '.')?>" 
-                                                	<?=$retorno?>
-                                                	num_item='<?=$tmp_filtro["osprodutopeca_id"]?>'
-                                                >
+                                                <input class="moeda valid" type="text" maxlength="9" id="osprodutopeca_desconto_<?=$tmp_filtro["osprodutopeca_id"]?>" name="osprodutopeca_desconto_<?=$tmp_filtro["osprodutopeca_id"]?>" value="<?=number_format($tmp_filtro['osprodutopeca_valor_desconto'], 2, ',', '.')?>" <?=$retorno?>>
                                                 </input>
-												<input type="hidden" name="valor_desconto_<?=$tmp_filtro["osprodutopeca_id"]?>" id="valor_desconto_<?=$tmp_filtro["osprodutopeca_id"]?>" value="<?=$tmp_filtro['osprodutopeca_valor_desconto']?>">
                                             </div>
                                         </td>
 
-                                        <!-- <td>
+                                        <td>
                                             <div class="input-control text">
                                                 <input class="moeda valid" type="text" maxlength="9" id="osprodutopeca_valor_mao_obra_<?=$tmp_filtro["osprodutopeca_id"]?>" name="osprodutopeca_valor_mao_obra_<?=$tmp_filtro["osprodutopeca_id"]?>" value="<?=number_format($tmp_filtro['osprodutopeca_valor_mao_obra'], 2, ',', '.')?>" <?=$retorno?>>
                                                 </input>
-												<input type="hidden" name="valor_maodeobra_<?=$tmp_filtro["osprodutopeca_id"]?>" id="valor_maodeobra_<?=$tmp_filtro["osprodutopeca_id"]?>" value="<?=$valor_mao_obra?>">
                                             </div>
-                                        </td> -->
+                                        </td>
                                         <td>
                                             <div class="input-control text">
                                                 <?
-                                                    $valor_total_peca = ($valor_venda * $tmp_filtro["osprodutopeca_qtde"]) - $tmp_filtro['osprodutopeca_valor_desconto'];
+                                                    $valor_total_peca = $valor_venda + $tmp_filtro['osprodutopeca_valor_mao_obra'] - $tmp_filtro['osprodutopeca_valor_desconto'];
                                                     $mo++;
                                                 ?>
                                                 <input class="moeda valid" type="text" maxlength="9" id="osprodutopeca_valor_total_<?=$tmp_filtro["osprodutopeca_id"]?>" name="osprodutopeca_valor_total_<?=$tmp_filtro["osprodutopeca_id"]?>" value="<?=number_format($valor_total_peca, 2, ',', '.')?>" disabled>
@@ -1003,30 +490,21 @@ if ($acao == "get_peca_lista"){
                                 ?>
 								<td class="text-center">
 									<div class="input-control text">
-										<select <?if ($nf!='' || $nfs!='') echo 'disabled="true" '?> class="lista_cobrar" name="osprodutopeca_cobrar_<?=$tmp_filtro["osprodutopeca_id"]?>" id="osprodutopeca_cobrar_<?=$tmp_filtro["osprodutopeca_id"]?>" style="width: 70px; margin:auto;" onchange="valorVenda(<?=$tmp_filtro["osprodutopeca_id"] . ", '". number_format($tmp_filtro["osprodutopeca_valor_venda"], 2, ',', '.') ."',".$tmp_filtro["produto_id_peca"]?>);" <?=$readonly?>>
+										<select class="lista_cobrar" name="osprodutopeca_cobrar_<?=$tmp_filtro["osprodutopeca_id"]?>" id="osprodutopeca_cobrar_<?=$tmp_filtro["osprodutopeca_id"]?>" style="width: 70px; margin:auto;" onchange="valorVenda(<?=$tmp_filtro["osprodutopeca_id"] . ", '". number_format($tmp_filtro["osprodutopeca_valor_venda"], 2, ',', '.') ."',".$tmp_filtro["produto_id_peca"]?>);" <?=$readonly?>>
 											<option value=""><?=fct_get_var('global.php', 'var_selecione', $_SESSION["care-br"]["idioma_id"])?></option>
-											<option value="S" <? if ($tmp_filtro["osprodutopeca_cobrar"] == "S" || ($clienteconfig_id == '97' && empty($tmp_filtro['osproduto_cobrar']))) echo "selected"; ?> ><?=$sim?></option>
+											<option value="S" <? if ($tmp_filtro["osprodutopeca_cobrar"] == "S" || (($clienteconfig_id == '97' || $clienteconfig_id == '168') && empty($tmp_filtro['osproduto_cobrar']))) echo "selected"; ?> ><?=$sim?></option>
 											<option value="N" <? if ($tmp_filtro["osprodutopeca_cobrar"] == "N") echo "selected"; ?> ><?=$nao?></option>
-											<option value="cortesia" <? if ($tmp_filtro["osprodutopeca_cobrar"] == "cortesia") echo "selected"; ?> >Cortesia</option>
 										</select>
-										<input type="hidden" name="peca_cobrar_<?=$tmp_filtro['osprodutopeca_id']?>" id="peca_cobrar_<?=$tmp_filtro['osprodutopeca_id']?>" value="<?=$tmp_filtro["osprodutopeca_cobrar"]?>">
 									</div>
 								</td>
 
-								<td>
-									<?=$tmp_filtro['display']?>
-								</td>
-
-
 								<td class="text-center">
-									<?if ($nf!='' || $nfs!='') {}else{?>
-									<a href="javascript: void(0);" onClick="updtPecaLista('<?=$tmp_filtro["osprodutopeca_id"]?>');" title="Alterar" alt="Alterar"><i class="icon-save"></i></a>
+									<a href="javascript: void(0);" onClick="updtPecaLista('<?=$tmp_filtro["osprodutopeca_id"]?>','<?=$tmp_filtro["produto_id_peca"]?>');" title="Alterar" alt="Alterar"><i class="icon-save"></i></a>
 									<a href="javascript: void(0);" onClick="excluiCadastro('<?=$tmp_filtro["osprodutopeca_id"]?>', '<?=$tmp_filtro["produto_id_peca"]?>');" title="Excluir" alt="Excluir"><i class="icon-cancel"></i></a>
-									<?}?>
 								</td>
 							</tr>
 							<?
-							if ($clienteconfig_id == 20 || $clienteconfig_id == 82) {
+							if ($clienteconfig_id == 20 || $clienteconfig_id == 82 || $clienteconfig_id == 136 || $clienteconfig_id == 137 || $clienteconfig_id == 138 || $clienteconfig_id == 139) {
 								if ($os_cobertura == 'GARANTEC-ESTENDIDA' 
 									|| $os_cobertura == 'LUIZASEG-ESTENDIDA' 
 									|| $os_cobertura == 'CARDIF-ESTENDIDA' 
@@ -1045,38 +523,17 @@ if ($acao == "get_peca_lista"){
 						?>
 						<input type="hidden" id="valor_total" value="<?=$valor_total?>">
                         <?
-                            if ($clienteconfig_id == 101 || $clienteconfig_id == 110 || $clienteconfig_id == 112 || $clienteconfig_id == 123 || $clienteconfig_id == 124 || $clienteconfig_id == 131 || $clienteconfig_id == 133 || (strpos(B2X_SES_OS.B2X_CSP_OS,"|".$clienteconfig_id."|")>0) ) {
+                            if ($clienteconfig_id == 123) {
                                 $total_geral = $total_venda + $total_mao_obra - $total_desconto;
                                 $total_geral = number_format($total_geral, 2, ',', '.');
                                 ?>
                                 <tr>
-									<td colspan="3" class="text-center"><b>Totais</b></td>
-									<td class="text-center"><b><?=number_format($total_valor_unitario, 2, ',', '.')?></b></td>
-									<td colspan="3"></td>
+                                    <td colspan="9" class="text-center"><b>Totais</b></td>
                                     <td class="text-center"><b><?=number_format($total_venda, 2, ',', '.');?></b></td>
                                     <td class="text-center"><b><?=number_format($total_desconto, 2, ',', '.');?></b></td>
-                                    <!-- <td class="text-center"><b><?=number_format($total_mao_obra, 2, ',', '.');?></b></td> -->
-                                    <td class="text-center"><b><?=$total_geral?></b></td>									
-                                    <td></td>
-									<?
-										if (($clienteconfig_id == '123' || $clienteconfig_id == '131' || (strpos(B2X_CSP_OS,"|".$clienteconfig_id."|")>0) ) && $dados_cadastro[0]["resultado_orcamento"] == 'Orcamento Reprovado') {
-											?>
-											<td>
-												<a href="javascript: void(0);" onClick="excluiCadastroTodos();" title="Excluir Todos" alt="Excluir Todos"><i class="icon-cancel"></i></a>
-											</td>
-											<?
-										} elseif ($clienteconfig_id == '123' || $clienteconfig_id == '131' || (strpos(B2X_CSP_OS,"|".$clienteconfig_id."|")>0) ) {
-											?>
-											<td>
-												<a href="javascript: void(0);" onClick="updtPecaLista('');" title="Alterar todas" alt="Alterar todas"><i class="icon-save"></i></a>
-											</td>
-											<?
-										} else {
-											?>
-											<td></td>
-											<?
-										}
-									?>
+                                    <td class="text-center"><b><?=number_format($total_mao_obra, 2, ',', '.');?></b></td>
+                                    <td class="text-center"><b><?=$total_geral?></b></td>
+                                    <td colspan="2"></td>
                                 </tr>
                                 <?
                             }
@@ -1088,18 +545,7 @@ if ($acao == "get_peca_lista"){
 	</div>
 	
 	<!-- selecionar e adicionar peça -->
-	<?if ($nf!='' || $nfs!='') {}else{?>
 	<div class="row">
-		<? 
-			$modalidade = $conn->getData("select tipo_isento_taxa from tb_prod_os where os_id = $os_id")[0]['tipo_isento_taxa'];
-
-			if($modalidade == 'Assurant'){ ?>
-			<div class="span2 campos-form">	
-				<p><b>É display?</b></p>
-				<label for="coisa1"><input type="radio" value="S" id="coisa1" class="radioDisplay" name="input-display"> Sim</label>
-				<label for="coisa2"><input type="radio" value="N" id="coisa2" class="radioDisplay" name="input-display"> Não</label>
-			</div>
-		<? } ?>		
 		<div class="span6 campos-form">
 			<div class="input-control select">
 				<label>
@@ -1128,20 +574,58 @@ if ($acao == "get_peca_lista"){
 																WHERE os_id = '" . $os_id . "' AND produto_id = '" . $produto_id . "')
 								ORDER BY b.idiomaproduto_descricao";
 					$result_filtro = $conn->sql($sql);
+
 					while($tmp_filtro = mysqli_fetch_array($result_filtro)){
+						if ($clienteconfig_id==7 || $clienteconfig_id==190 ){
+                        	$sql_status_id = " AND (SELECT SUM(qtde) AS 'qtde' FROM tb_prod_estoque_status pes INNER JOIN tb_prod_estoque pe ON (pes.estoque_id = pe.estoque_id) WHERE pes.status_id = '60' AND pe.categoria_id = '21' AND pe.produto_id = estoque.produto_id AND pe.estoque_id = estoque.estoque_id) IS NOT NULL AND (SELECT SUM(qtde) AS 'qtde' FROM tb_prod_estoque_status pes INNER JOIN tb_prod_estoque pe ON (pes.estoque_id = pe.estoque_id) WHERE pes.status_id = '60' AND pe.categoria_id = '21' AND pe.produto_id = estoque.produto_id AND pe.estoque_id = estoque.estoque_id) > '0.0' ";
+                        
+                        
+							$sqlestoque = "SELECT estoque.estoque_id as 'Estoque'
+								FROM tb_prod_estoque estoque
+							 	INNER JOIN tb_cad_produto produto ON estoque.produto_id = produto.produto_id 
+								INNER JOIN tb_cad_produto produto_idioma ON produto.produto_id = produto_idioma.produto_id 
+								INNER JOIN tb_cad_empresa fabricante ON (produto.empresa_id=fabricante.empresa_id) 
+								INNER JOIN tb_cad_linha linha_idioma ON produto.linha_id = linha_idioma.linha_id 
+								INNER JOIN tb_cad_estoque_categoria categoria_idioma ON estoque.categoria_id = categoria_idioma.categoria_id 
+								LEFT JOIN tb_cad_estoque_pallet epa ON estoque.pallet_id = epa.pallet_id 
+								LEFT JOIN tb_cad_estoque_prateleira epr ON epa.prateleira_id = epr.prateleira_id 
+								LEFT JOIN tb_cad_estoque_rua er ON er.rua_id = epr.rua_id 
+								LEFT JOIN tb_prod_empresa_cliente ec ON(er.empresacliente_id=ec.empresacliente_id) 
+								LEFT JOIN tb_cad_produto_categoria f ON produto.produto_categoria_id = f.categoria_id 
+	   
+								   WHERE estoque.categoria_id in ('21') and (estoque.empresacliente_id ='29' or estoque.empresacliente_id ='939')  and produto.produto_id= '".$tmp_filtro["produto_id_peca"]."' ".$sql_status_id." ";
+							$result_filtro_estoque = $conn->sql($sqlestoque);
+							$estoque_id=0;
+	                        while($tmp_estoque = mysqli_fetch_array($result_filtro_estoque)){
+	                        		$estoque_id=$tmp_estoque["Estoque"];
+
+	                        	}
+	                        	$estoque=" -- 0";
+	                        if  ( empty($estoque_id)){}
+	                        else{
+		                        	$sqlquantidade="SELECT sum(qtde) as Estoque
+		    						  FROM tb_prod_estoque_status status
+		    						WHERE estoque_id=".$estoque_id." and status_id=60" ;
+		                        
+		                        	$result_filtro_quantidade = $conn->sql($sqlquantidade);
+		                       	while($tmp_quantidade= mysqli_fetch_array($result_filtro_quantidade)){
+		                        		$estoque=" -- ".$tmp_quantidade["Estoque"];
+
+		                        } 
+	                        } 
+                        }
+                        else{
+                    	  $estoque="";
+                        }
 						?>
-						<option value="<?=$tmp_filtro["produto_id_peca"]?>" title="<?=$tmp_filtro["produto_descricao"]?>" alt="<?=$tmp_filtro["produto_descricao"]?>" <? if ($tmp_filtro["produto_id_peca"] == $produto_id_peca) echo "selected"; ?> ><?=$tmp_filtro["produto_codigo"]?> - <?=$tmp_filtro["produto_descricao"]?></option>
+						<option value="<?=$tmp_filtro["produto_id_peca"]?>" title="<?=$tmp_filtro["produto_descricao"]?>" alt="<?=$tmp_filtro["produto_descricao"]?>" <?if ($tmp_filtro["produto_id_peca"] == $produto_id_peca) echo "selected"; ?> ><?=$tmp_filtro["produto_codigo"]?> - <?=$tmp_filtro["produto_descricao"]?><?=$estoque?></option>
 						<?
 					}
 					?>
 				</select>
-
 			</div>
-
-
 		</div>
 	</div>
-	<?}?>
 
 
 
@@ -1179,7 +663,7 @@ if ($acao == "get_peca_lista_crc") {
     // AND status.status_titulo<>'Disponivel' <--- Tirar registro Disponivel da tabela da grid
     $rs = $conn->sql($sql);
     //$rows = mysqli_num_rows($rs);
-    while ($tmp_cadastro = mysqli_fetch_array($rs)){
+    while ($tmp_cadastro = mysqli_fetch_array($rs,MYSQL_ASSOC)){
 
         $status[] = $tmp_cadastro;
 
@@ -1396,7 +880,7 @@ if ($acao == "get_peca_lista_crc") {
 								</td>
 							</tr>
 							<?
-							if ($clienteconfig_id == 20 || $clienteconfig_id == 82) {
+							if ($clienteconfig_id == 20 || $clienteconfig_id == 82 || $clienteconfig_id == 136 || $clienteconfig_id == 137 || $clienteconfig_id == 138 || $clienteconfig_id == 139) {
 								if ($os_cobertura == 'GARANTEC-ESTENDIDA' 
 									|| $os_cobertura == 'LUIZASEG-ESTENDIDA' 
 									|| $os_cobertura == 'CARDIF-ESTENDIDA' 
@@ -1492,7 +976,7 @@ if ($acao == "get_produto_emprestimo"){
 // get_status_novo
 // ---------------
 if ($acao == "get_status_novo"){
-
+     
 	if($clienteconfig_id == '82'){
 		echo "//".$os_cobertura.'//';
 		echo strpos($os_cobertura,'FORA');
@@ -1504,14 +988,22 @@ if ($acao == "get_status_novo"){
 	<option value=""><?=fct_get_var('global.php', 'var_selecione', $_SESSION["care-br"]["idioma_id"])?></option>
 	<?
 	if ($motivo_aceita == "S"){	
+
 		if( ($os_cobertura == 'CARDIF-QA') 
 			|| ($os_cobertura == 'Corporativo')
 			|| ($os_cobertura == 'Avulso')
 			|| ($os_cobertura == 'Locação')
+            || (($os_cobertura == 'BullitFG') && ($clienteconfig_id==85 || $clienteconfig_id==199 ))
+            || (($os_cobertura == 'AvulsoFG') && ($clienteconfig_id==85 || $clienteconfig_id==199))
+            || (($os_cobertura == 'CorporativoFG') && ($clienteconfig_id==85 || $clienteconfig_id==199))
+            || (($os_cobertura == 'RenoveTecFG') && ($clienteconfig_id==85 || $clienteconfig_id==199))
 			|| ($os_cobertura == 'ZURICH-QA') 
 			|| ($os_cobertura == 'ZURICH-FAST-QA') 
+			|| ($os_cobertura == 'ZURICH HAVAH QA')
 			|| ($os_cobertura == 'LUIZASEG-QA') 
 			|| ($os_cobertura == 'ORCAMENTO')
+			|| ($os_cobertura == 'Cardif')
+			|| ($os_cobertura == 'Luizaseg')
 			|| ($os_cobertura == utf8_encode('Orçamento')) 
 			|| ($os_cobertura == 'Garantec-ESTENDIDA') 
 			|| ($os_cobertura == 'Assurant-ESTENDIDA') 
@@ -1523,12 +1015,14 @@ if ($acao == "get_status_novo"){
 			|| ($os_cobertura == 'ORCAMENTOB2W')
 			|| ($os_cobertura == 'FORAGARANTIA-INFO')
 			|| ($os_cobertura == 'FORAGARANTIA-MARROM')
+			|| ($os_cobertura == 'FORAGARANTIASAMSUNGBRANCA')
+			|| ($os_cobertura == 'GARANTIA-SAMSUNGBRANCA')
+			|| ($os_cobertura == 'FORADEGARANTIA-IHLB')
 			|| ($os_cobertura == 'FORAGARANTIA-B2WCELULAR')
 			|| ($os_cobertura == 'FORAGARANTIA-B2WMARROM')
 			|| ($os_cobertura == 'FORADEGARANTIAINHOME')
+			|| ($os_cobertura == 'FORA GARANTIA-SITE')
 			|| strpos($os_cobertura,'ORCAMENTO')){
-
-			//echo "aqui";
 										
 			$sql = "SELECT d.status_id,
 					a.clienteconfigpasso_titulo AS status_titulo, e.idiomastatus_descricao AS status_descricao
@@ -1542,6 +1036,20 @@ if ($acao == "get_status_novo"){
 					AND d.status_id IN (" . $status_id . "," . STATUS_OS_AGUARDA_ORCAMENTO . ")
 					AND e.idioma_id = '" . $_SESSION["care-br"]["idioma_id"] . "'
 					ORDER BY a.clienteconfigpasso_ordem ";
+			if($clienteconfig_id==85 || $clienteconfig_id==199){
+				$sql = "SELECT d.status_id,
+				a.clienteconfigpasso_titulo AS status_titulo, e.idiomastatus_descricao AS status_descricao
+				FROM tb_prod_care_cliente_config_passo a
+				INNER JOIN tb_prod_care_cliente_config_passo_dicionario_dados b ON a.clienteconfigpasso_id = b.clienteconfigpasso_id
+				INNER JOIN tb_cad_dicionario_dados c ON b.dicionario_id = c.dicionario_id 
+				INNER JOIN tb_cad_status d ON c.status_id = d.status_id
+				INNER JOIN tb_cad_idioma_status e ON d.status_id = e.status_id
+				INNER JOIN tb_prod_perfil_status f ON d.status_id = f.status_id AND f.perfil_id = '" . $_SESSION["care-br"]["perfil_id"] . "'
+				WHERE a.clienteconfig_id = '" . $clienteconfig_id . "' AND c.dicionario_ativo = 'S' AND d.status_ativo = 'S'
+				AND d.status_id IN (" . $status_id . "," . STATUS_OS_AGUARDA_ORCAMENTO . ", ". STATUS_OS_EMBALAGEM.")
+				AND e.idioma_id = '" . $_SESSION["care-br"]["idioma_id"] . "'
+				ORDER BY a.clienteconfigpasso_ordem ";
+			}
 
 			//verifica se o fluxo tem o orcamento rapido
 			$sql_orc_rapido = "SELECT clienteconfigpassodicionario_id
@@ -1595,7 +1103,7 @@ if ($acao == "get_status_novo"){
 					INNER JOIN tb_cad_idioma_status e ON d.status_id = e.status_id
 					INNER JOIN tb_prod_perfil_status f ON d.status_id = f.status_id AND f.perfil_id = '" . $_SESSION["care-br"]["perfil_id"] . "'
 					WHERE a.clienteconfig_id = '" . $clienteconfig_id . "' AND c.dicionario_ativo = 'S' AND d.status_ativo = 'S'
-					AND d.status_id IN (" . $status_id . "," . STATUS_OS_APROVA_ORCAMENTO . ")
+					AND d.status_id IN (" . $status_id . "," . STATUS_OS_AGUARDA_ORCAMENTO . ")
 					AND e.idioma_id = '" . $_SESSION["care-br"]["idioma_id"] . "'
 					ORDER BY a.clienteconfigpasso_ordem ";	
 			}
@@ -1628,6 +1136,7 @@ if ($acao == "get_status_novo"){
 					AND d.status_id >= '" . $status_id . "'
 					AND e.idioma_id = '" . $_SESSION["care-br"]["idioma_id"] . "'
 					ORDER BY a.clienteconfigpasso_ordem LIMIT $limit";
+
 
 			if(($os_peca_precisa == 'N') && ($clienteconfig_id== 11)) {
 
@@ -1662,6 +1171,24 @@ if ($acao == "get_status_novo"){
 					AND d.status_id <> '" . STATUS_OS_APROVA_ORCAMENTO . "'
 					AND e.idioma_id = '" . $_SESSION["care-br"]["idioma_id"] . "'
 					ORDER BY a.clienteconfigpasso_ordem LIMIT 0,3";
+			if($clienteconfig_id==85 || $clienteconfig_id==199){
+				$sql = "SELECT d.status_id,
+				a.clienteconfigpasso_titulo AS status_titulo, e.idiomastatus_descricao AS status_descricao
+				FROM tb_prod_care_cliente_config_passo a
+				INNER JOIN tb_prod_care_cliente_config_passo_dicionario_dados b ON a.clienteconfigpasso_id = b.clienteconfigpasso_id
+				INNER JOIN tb_cad_dicionario_dados c ON b.dicionario_id = c.dicionario_id 
+				INNER JOIN tb_cad_status d ON c.status_id = d.status_id
+				INNER JOIN tb_cad_idioma_status e ON d.status_id = e.status_id
+				INNER JOIN tb_prod_perfil_status f ON d.status_id = f.status_id AND f.perfil_id = '" . $_SESSION["care-br"]["perfil_id"] . "'
+				WHERE a.clienteconfig_id = '" . $clienteconfig_id . "' AND c.dicionario_ativo = 'S' AND d.status_ativo = 'S'
+				AND d.status_id >= '" . $status_id . "'
+				AND d.status_id <> '" . STATUS_OS_AGUARDA_ORCAMENTO . "'
+				AND d.status_id <> '" . STATUS_OS_APROVA_ORCAMENTO . "'
+				AND d.status_id <> '" . STATUS_OS_REPARO . "'
+				AND d.status_id <> '" . STATUS_OS_TESTE . "'
+				AND e.idioma_id = '" . $_SESSION["care-br"]["idioma_id"] . "'
+				ORDER BY a.clienteconfigpasso_ordem LIMIT 0,4";
+			}
 
 			//tratamento PERDA DE GARANTIA
 			if($os_tipo_servico == 18 || $os_tipo_servico == 6) {
@@ -1760,6 +1287,8 @@ if ($acao == "get_status_novo"){
 					AND b.idioma_id = '" . $_SESSION["care-br"]["idioma_id"] . "'";				
 		}
 	}
+
+
 	if($clienteconfig_id == "22" && ($os_sub_status == 'Sem Defeito' || $os_sub_status == 'Peca Descontinuada'|| $os_sub_status == 'Sem Conserto')){			
 						
 			$sql = "SELECT a.status_id,
@@ -1770,6 +1299,7 @@ if ($acao == "get_status_novo"){
 					WHERE a.status_id = '" . STATUS_OS_AGUARDA_COLETA . "' AND a.status_ativo = 'S'
 					AND b.idioma_id = '" . $_SESSION["care-br"]["idioma_id"] . "'";	
 	}	
+
 	if($clienteconfig_id =="21" && ($os_sub_status == 'Sem Defeito' || $os_sub_status == 'Sem Conserto')){			
 						
 			$sql = "SELECT a.status_id,
@@ -1780,6 +1310,7 @@ if ($acao == "get_status_novo"){
 					WHERE a.status_id = '" . STATUS_OS_TESTE . "' AND a.status_ativo = 'S'
 					AND b.idioma_id = '" . $_SESSION["care-br"]["idioma_id"] . "'";	
 	}
+
 	if($clienteconfig_id =="20" && $os_cobertura="ZURICH QA CSP"){			
 						
 		$sql = "SELECT d.status_id,
@@ -1795,6 +1326,7 @@ if ($acao == "get_status_novo"){
 		AND e.idioma_id = '1'
 		ORDER BY a.clienteconfigpasso_ordem LIMIT 2";	
     }
+
 	if(!empty($os_sub_status)){
 		$sql_status_config = "SELECT sts.status_id,
 						sts_pass.clienteconfigpasso_titulo AS status_titulo, sts.status_descricao AS status_descricao
@@ -1810,11 +1342,10 @@ if ($acao == "get_status_novo"){
 			$sql = $sql_status_config;
     }
     
-    if ($clienteconfig_id == 101 || $clienteconfig_id == 110 || $clienteconfig_id == 112 || $clienteconfig_id == 123 || $clienteconfig_id == 124 || $clienteconfig_id == 131 || $clienteconfig_id == 133 || (strpos(B2X_SES_OS.B2X_CSP_OS,"|".$clienteconfig_id."|")>0) ) {
+    if ($clienteconfig_id == '123') {
         switch ($os_peca_precisa) {
             case 'S':
-				$peca_complementar = '';
-				$reprovado = '';
+                $peca_complementar = '';
                 $sql = "SELECT osprodutopeca_complementar, osprodutopeca_cobrar FROM tb_prod_os_produto_peca WHERE os_id = '$os_id'";
                 $result = $conn->sql($sql);
                 while ($tmp = mysqli_fetch_array($result)) {
@@ -1824,42 +1355,23 @@ if ($acao == "get_status_novo"){
                         $peca_complementar = 'S';
                     } elseif ($tmp['osprodutopeca_complementar'] == 'MO') {
                         $peca_complementar = 'MO';
-					}
-					
-					if (($clienteconfig_id == 123 || $clienteconfig_id == 131 || (strpos(B2X_CSP_OS,"|".$clienteconfig_id."|")>0) ) && $dados_cadastro[0]["resultado_orcamento"] == 'Orcamento Reprovado') {
-						$reprovado = 'S';
-					}
+                    }
                 }
-                if ($peca_complementar == 'S' && $reprovado != 'S') {
+                if ($peca_complementar == 'S') {
                     $status = "10, 12";
-                } elseif ($peca_complementar == 'MO' && $reprovado != 'S') {
+                } elseif ($peca_complementar == 'MO') {
                     $status = "10, 24";
                 } else {
-					if ($clienteconfig_id == 123 || $clienteconfig_id == 131 || (strpos(B2X_CSP_OS,"|".$clienteconfig_id."|")>0) ) {
-						if ($reprovado == 'S') {
-							$status = "14";
-						} else {
-							$status = "10, 14";
-						}
-					} else {
-						$status = "10, 16";
-					}
+                    $status = "10, 14";
                 }
             break;
-			case 'N':
+            case 'N':
                 $status = "10, 16";
             break;
             default:
                 $status = "10";
             break;
         }
-
-			$modalidade = $conn->getData("select tipo_isento_taxa from tb_prod_os where os_id = $os_id")[0]['tipo_isento_taxa'];
-
-			if( (strpos("|".$modalidade, 'Assurant') >0 ) || (strpos("|".$modalidade, 'LuizaSeg') >0 ) || (strpos("|".$modalidade, 'Zurick') >0 ) ){
-				$status = "13"; 
-
-			} 		
         $sql = "SELECT d.status_id,
             a.clienteconfigpasso_titulo AS status_titulo, a.clienteconfigpasso_descricao AS status_descricao
             FROM tb_prod_care_cliente_config_passo a
@@ -1873,7 +1385,8 @@ if ($acao == "get_status_novo"){
             AND e.idioma_id = '1'
             ORDER BY a.clienteconfigpasso_ordem LIMIT 3";
     }
-
+	
+				
 	$result_filtro = $conn->sql($sql);
 	while($tmp_filtro = mysqli_fetch_array($result_filtro)){
 		?>
@@ -1931,8 +1444,9 @@ if ($acao == "get_status_novo"){
 		}
 	}
 
-	// Barrafix enviar para Ag. Peca
-	if ($clienteconfig_id == "93") {
+	// Barrafix / Helpsam / Edatec enviar para Ag. Peca
+	if ($clienteconfig_id == "93" || $clienteconfig_id == "130" || $clienteconfig_id == "163" || $clienteconfig_id == "176" || $clienteconfig_id == "178"  ) {
+		
 		$sql = "SELECT a.status_id,
 				b.idiomastatus_titulo AS status_titulo, b.idiomastatus_descricao AS status_descricao
 				FROM tb_cad_status a
@@ -1942,15 +1456,36 @@ if ($acao == "get_status_novo"){
 				AND a.status_id > '" . $tmp_status["status_id"] . "'
 				AND b.idioma_id = '" . $_SESSION["care-br"]["idioma_id"] . "'";
 				$result_filtro = $conn->sql($sql);
-				while($tmp_filtro = mysqli_fetch_array($result_filtro)){
-					?>
-		<option title="<?=$tmp_filtro["status_descricao"]?>" alt="<?=$tmp_filtro["status_descricao"]?>" value="<?=$tmp_filtro["status_id"]?>" <? if ($status_id == $tmp_filtro["status_id"]) echo "selected"; ?> ><?=$tmp_filtro["status_titulo"]?></option>
-		<?
+
+		while($tmp_filtro = mysqli_fetch_array($result_filtro)){
+			?>
+			<option title="<?=$tmp_filtro["status_descricao"]?>" alt="<?=$tmp_filtro["status_descricao"]?>" value="<?=$tmp_filtro["status_id"]?>" <? if ($status_id == $tmp_filtro["status_id"]) echo "selected"; ?> ><?=$tmp_filtro["status_titulo"]?></option>
+			<?
+		}
+	}
+
+	// Fixcenter
+	if ($clienteconfig_id == "131" || $clienteconfig_id == "132") {
+		
+		$sql = "SELECT a.status_id,
+				b.idiomastatus_titulo AS status_titulo, b.idiomastatus_descricao AS status_descricao
+				FROM tb_cad_status a
+				INNER JOIN tb_cad_idioma_status b ON a.status_id = b.status_id
+				INNER JOIN tb_prod_perfil_status c ON a.status_id = c.status_id AND c.perfil_id = '" . $_SESSION["care-br"]["perfil_id"] . "'
+				WHERE a.status_id IN (" . STATUS_OS_APROVA_ORCAMENTO . "," . STATUS_OS_AGUARDA_PECA . "," . STATUS_OS_REPARO . ") AND a.status_ativo = 'S'
+				AND a.status_id > '" . $tmp_status["status_id"] . "'
+				AND b.idioma_id = '" . $_SESSION["care-br"]["idioma_id"] . "'";
+				$result_filtro = $conn->sql($sql);
+
+		while($tmp_filtro = mysqli_fetch_array($result_filtro)){
+			?>
+			<option title="<?=$tmp_filtro["status_descricao"]?>" alt="<?=$tmp_filtro["status_descricao"]?>" value="<?=$tmp_filtro["status_id"]?>" <? if ($status_id == $tmp_filtro["status_id"]) echo "selected"; ?> ><?=$tmp_filtro["status_titulo"]?></option>
+			<?
 		}
 	}
 	
 
-	if ($clienteconfig_id == "97" || $clienteconfig_id == "127") {
+	if ($clienteconfig_id == "97" || $clienteconfig_id == "127" || $clienteconfig_id == "168") {
 		$sql = "SELECT a.status_id,
 				b.idiomastatus_titulo AS status_titulo, b.idiomastatus_descricao AS status_descricao
 				FROM tb_cad_status a
@@ -1967,6 +1502,26 @@ if ($acao == "get_status_novo"){
 			<?
 		}
 	}
+
+	// JMV Suzano e FILIAL incluir o ag. orçamento
+	if ($clienteconfig_id == "138" || $clienteconfig_id == "82" ) {
+		
+		$sql = "SELECT a.status_id,
+				b.idiomastatus_titulo AS status_titulo, b.idiomastatus_descricao AS status_descricao
+				FROM tb_cad_status a
+				INNER JOIN tb_cad_idioma_status b ON a.status_id = b.status_id
+				INNER JOIN tb_prod_perfil_status c ON a.status_id = c.status_id AND c.perfil_id = '" . $_SESSION["care-br"]["perfil_id"] . "'
+				WHERE a.status_id IN (" . STATUS_OS_AGUARDA_ORCAMENTO . ") AND a.status_ativo = 'S'
+				AND a.status_id > '" . $tmp_status["status_id"] . "'
+				AND b.idioma_id = '" . $_SESSION["care-br"]["idioma_id"] . "'";
+				$result_filtro = $conn->sql($sql);
+
+		while($tmp_filtro = mysqli_fetch_array($result_filtro)){
+			?>
+			<option title="<?=$tmp_filtro["status_descricao"]?>" alt="<?=$tmp_filtro["status_descricao"]?>" value="<?=$tmp_filtro["status_id"]?>" <? if ($status_id == $tmp_filtro["status_id"]) echo "selected"; ?> ><?=$tmp_filtro["status_titulo"]?></option>
+			<?
+		}
+	}
 	
 
 }
@@ -1974,13 +1529,15 @@ if ($acao == "get_status_novo"){
 // -----------------
 // get_servico_lista
 // -----------------
+
 if ($acao == "get_servico_lista"){
-	// obter serviços
-	$sql = "SELECT a.*, b.*
-				FROM tb_prod_os_servico a
-				LEFT JOIN tb_cad_servico b ON a.servico_id = b.servico_id
-				WHERE a.os_id = '$os_id'
-				ORDER BY b.titulo";
+	// obter serviços já informados
+	$sql = "SELECT a.*,
+				b.idiomaservico_titulo AS servico_titulo, b.idiomaservico_descricao AS servico_descricao
+				FROM tb_prod_os_tipo_servico a
+				INNER JOIN tb_cad_idioma_os_tipo_servico b ON a.servico_id = b.servico_id AND b.idioma_id = '" . $_SESSION["care-br"]["idioma_id"] . "'
+				WHERE a.os_id = '" . $os_id . "'
+				ORDER BY b.idiomaservico_titulo";
 	$result_filtro = $conn->sql($sql);
 	if (mysqli_num_rows($result_filtro) > 0){
 		?>
@@ -1993,7 +1550,6 @@ if ($acao == "get_servico_lista"){
 	}
 	?>
 
-	<script type="text/javascript" src="js/jquery.maskMoney.js"></script>
 	<script type="text/javascript">
 		$(document).ready(function() {
 			// configuração formato moeda
@@ -2001,24 +1557,17 @@ if ($acao == "get_servico_lista"){
 		});
 	</script>
 	
-	
 	<div class="row">
-		<div class="campos-form">
+		<!--<div class="span6 campos-form">-->
 			<div class="input-control text">
-				Lista de Serviços: 
-				<?if ($nfs!=''){?>
-					<div class="alert info">
-				  		<strong>Info!</strong> <?=$nfs?>
-					</div>
-				<?php
-				}?>
-				<table class="striped bordered hovered" style="width: 100%;">
+				Lista de Serviços:
+				<table class="striped bordered hovered">
 					<thead>
 						<tr>
 							<th class="text-center">#</th>
-							<th class="text-center">Título</th>
+							<th class="text-center">Tipo do Serviço</th>
 							<th class="text-center">Valor</th>
-							<th class="text-center">Desconto</th>
+							<th class="text-center">Comentário</th>
 							<th class="text-center"></th>
 						</tr>
 					</thead>
@@ -2029,23 +1578,20 @@ if ($acao == "get_servico_lista"){
 							?>
 							<tr>
 								<td class="text-center"><?=++$cont_servico?></td>
-								<td class="text-center" title="<?=$tmp_filtro["titulo"]?>" alt="<?=$tmp_filtro["titulo"]?>"><?=$tmp_filtro["titulo"]?></td>
+								<td class="text-center" title="<?=$tmp_filtro["servico_descricao"]?>" alt="<?=$tmp_filtro["servico_descricao"]?>"><?=$tmp_filtro["servico_titulo"]?></td>
 								<td class="text-center">
 									<div class="input-control text">
-										<input <?if ($nfs!='') echo 'disabled="true" '?> class="moeda" type="text" id="osservico_valor_<?=$tmp_filtro["osservico_id"]?>" name="osservico_valor_<?=$tmp_filtro["osservico_id"]?>" value="<?=number_format($tmp_filtro["osservico_valor"], 2, ',', '.')?>"  />
+										<input class="moeda" type="text" id="osservico_valor_<?=$tmp_filtro["osservico_id"]?>" name="osservico_valor_<?=$tmp_filtro["osservico_id"]?>" value="<?=number_format($tmp_filtro["osservico_valor"], 2, ',', '.')?>"  />
 									</div>
 								</td>
 								<td class="text-center">
 									<div class="input-control text">
-										<input <?if ($nfs!='') echo 'disabled="true" '?> class="moeda" type="text" id="osservico_desconto_<?=$tmp_filtro["osservico_id"]?>" name="osservico_desconto_<?=$tmp_filtro["osservico_id"]?>" value="<?=number_format($tmp_filtro["osservico_desconto"], 2, ',', '.')?>"  />
+										<input type="text" id="osservico_observacao_<?=$tmp_filtro["osservico_id"]?>" name="osservico_observacao_<?=$tmp_filtro["osservico_id"]?>" value="<?=$tmp_filtro["osservico_observacao"]?>" />
 									</div>
 								</td>
-
 								<td class="text-center">
-									<?if ($nfs!='') {}else{?>
 									<a href="javascript: void(0);" onClick="updtServicoLista('<?=$tmp_filtro["osservico_id"]?>');" title="Alterar" alt="Alterar"><i class="icon-save"></i></a>
 									<a href="javascript: void(0);" onClick="excluiServicoLista('<?=$tmp_filtro["osservico_id"]?>');" title="Excluir" alt="Excluir"><i class="icon-cancel"></i></a>
-									<?}?>
 								</td>
 							</tr>
 							<?
@@ -2054,11 +1600,10 @@ if ($acao == "get_servico_lista"){
 					</tbody>
 				<table>
 			</div>
-		</div>
+		<!--</div>-->
 	</div>
 	
-	<!-- selecionar e adicionar serviço -->
-	<?if ($nfs!='') {}else{?>
+	<!-- selecionar e adicionar peça -->
 	<div class="row">
 		<div class="span6 campos-form">
 			<div class="input-control select">
@@ -2075,173 +1620,23 @@ if ($acao == "get_servico_lista"){
 					// trazer somente peças que tenham fabricante e linha configurados para acesso no perfil do usuário logado
 					// somente peças que ainda não estejam adicionadas ao reparo do produto
 					$sql = "SELECT DISTINCT a.servico_id,
-									a.titulo
-									FROM tb_cad_servico a
-									WHERE a.servico_id NOT IN (SELECT servico_id
-																FROM tb_prod_os_servico
+									b.idiomaservico_titulo AS servico_titulo, b.idiomaservico_descricao AS servico_descricao
+									FROM tb_cad_os_tipo_servico a
+									INNER JOIN tb_cad_idioma_os_tipo_servico b ON a.servico_id = b.servico_id AND b.idioma_id = '" . $_SESSION["care-br"]["idioma_id"] . "'
+									INNER JOIN tb_cad_os_tipo_servico_empresa_cliente c ON a.servico_id = c.servico_id AND c.clienteconfig_id = '" . $clienteconfig_id . "'
+									WHERE a.servico_ativo = 'S'
+									AND a.servico_id NOT IN (SELECT servico_id
+																FROM tb_prod_os_tipo_servico
 																WHERE os_id = '" . $os_id . "')
-										AND a.cliente_id = $cliente_id AND a.clienteconfig_id = $clienteconfig_id
-									ORDER BY a.titulo";
+									ORDER BY b.idiomaservico_titulo";
 					$result_filtro = $conn->sql($sql);
 					while($tmp_filtro = mysqli_fetch_array($result_filtro)){
 						?>
-						<option value="<?=$tmp_filtro["servico_id"]?>" title="<?=$tmp_filtro["titulo"]?>" alt="<?=$tmp_filtro["titulo"]?>" <? if ($tmp_filtro["servico_id"] == $servico_id) echo "selected"; ?> ><?=$tmp_filtro["titulo"]?></option>
+						<option value="<?=$tmp_filtro["servico_id"]?>" title="<?=$tmp_filtro["servico_descricao"]?>" alt="<?=$tmp_filtro["servico_descricao"]?>" <? if ($tmp_filtro["servico_id"] == $servico_id) echo "selected"; ?> ><?=$tmp_filtro["servico_titulo"]?></option>
 						<?
 					}
 					?>
 				</select>
-			</div>
-		</div>
-	</div>
-	<?}?>
-	<?
-}
-
-// -----------------
-// viz_servico_lista
-// -----------------
-if ($acao == "viz_servico_lista"){
-	// obter serviços
-	$sql = "SELECT a.*, b.*
-				FROM tb_prod_os_servico a
-				LEFT JOIN tb_cad_servico b ON a.servico_id = b.servico_id
-				WHERE a.os_id = '$os_id'
-				ORDER BY b.titulo";
-	$result_filtro = $conn->sql($sql);
-	?>
-
-	<script type="text/javascript" src="js/jquery.maskMoney.js"></script>
-	<script type="text/javascript">
-		$(document).ready(function() {
-			// configuração formato moeda
-			$(".moeda").maskMoney({decimal:",", thousands:".", precision:2});
-		});
-	</script>
-	
-	<div class="row">
-		<div class="campos-form">
-			<div class="input-control text">
-				Lista de Serviços:
-				<table class="striped bordered hovered" style="width: 98%;">
-					<thead>
-						<tr>
-							<th class="text-center">#</th>
-							<th class="text-center">Título</th>
-							<th class="text-center">Valor</th>
-							<th class="text-center">Desconto</th>
-						</tr>
-					</thead>
-					<tbody>
-						<?
-						$cont_servico = 0;
-						while($tmp_filtro = mysqli_fetch_array($result_filtro)){
-							?>
-							<tr>
-								<td class="text-center"><?=++$cont_servico?></td>
-								<td class="text-center" title="<?=$tmp_filtro["titulo"]?>" alt="<?=$tmp_filtro["titulo"]?>"><?=$tmp_filtro["titulo"]?></td>
-								<td class="text-center">
-									<div class="input-control text">
-										<input class="moeda" type="text" disabled id="osservico_valor_<?=$tmp_filtro["osservico_id"]?>" name="osservico_valor_<?=$tmp_filtro["osservico_id"]?>" value="<?=number_format($tmp_filtro["osservico_valor"], 2, ',', '.')?>"  />
-									</div>
-								</td>
-								<td class="text-center">
-									<div class="input-control text">
-										<input class="moeda" type="text" disabled id="osservico_desconto_<?=$tmp_filtro["osservico_id"]?>" name="osservico_desconto_<?=$tmp_filtro["osservico_id"]?>" value="<?=number_format($tmp_filtro["osservico_desconto"], 2, ',', '.')?>"  />
-									</div>
-								</td>
-							</tr>
-							<?
-						}
-						?>
-					</tbody>
-				<table>
-			</div>
-		</div>
-	</div>
-	<?
-}
-
-// -----------------
-// get_servico_lista
-// -----------------
-if ($acao == "orc_servico_lista"){
-	// obter serviços
-	$sql = "SELECT a.*, b.*
-				FROM tb_prod_os_servico a
-				LEFT JOIN tb_cad_servico b ON a.servico_id = b.servico_id
-				WHERE a.os_id = '$os_id'
-				ORDER BY b.titulo";
-	$result_filtro = $conn->sql($sql);
-	if (mysqli_num_rows($result_filtro) > 0){
-		?>
-		<input type="hidden" name="servico_add" id="servico_add" value="S" />
-		<?
-	}else{
-		?>
-		<input type="hidden" name="servico_add" id="servico_add" value="" />
-		<?
-	}
-	?>	
-
-	<script type="text/javascript" src="js/jquery.maskMoney.js"></script>
-	<script type="text/javascript">
-		$(document).ready(function() {
-			// configuração formato moeda
-			$(".moeda").maskMoney({decimal:",", thousands:".", precision:2});
-		});
-	</script>
-		
-	<div class="row">
-		<div class="campos-form">
-			<div class="input-control text">
-				Lista de Serviços:
-				<?if ($nfs!=''){?>
-					<div class="alert info">
-				  		<strong>Info!</strong> <?=$nfs?>
-					</div>
-				<?php
-				}?> 
-				
-				<table class="striped bordered hovered" style="width: 98%;">
-					<thead>
-						<tr>
-							<th class="text-center">#</th>
-							<th class="text-center">Título</th>
-							<th class="text-center">Valor</th>
-							<th class="text-center">Desconto</th>
-							<th class="text-center"></th>
-						</tr>
-					</thead>
-					<tbody>
-						<?
-						$cont_servico = 0;
-						while($tmp_filtro = mysqli_fetch_array($result_filtro)){
-							?>
-							<tr>
-								<td class="text-center"><?=++$cont_servico?></td>
-								<td class="text-center" title="<?=$tmp_filtro["titulo"]?>" alt="<?=$tmp_filtro["titulo"]?>"><?=$tmp_filtro["titulo"]?></td>
-								<td class="text-center">
-									<div class="input-control text">
-										<input <?if ($nfs!='') echo 'disabled="true" '?> class="moeda" type="text" id="osservico_valor_<?=$tmp_filtro["osservico_id"]?>" name="osservico_valor_<?=$tmp_filtro["osservico_id"]?>" value="<?=number_format($tmp_filtro["osservico_valor"], 2, ',', '.')?>"  />
-									</div>
-								</td>
-								<td class="text-center">
-									<div class="input-control text">
-										<input <?if ($nfs!='') echo 'disabled="true" '?> class="moeda" type="text" id="osservico_desconto_<?=$tmp_filtro["osservico_id"]?>" name="osservico_desconto_<?=$tmp_filtro["osservico_id"]?>" value="<?=number_format($tmp_filtro["osservico_desconto"], 2, ',', '.')?>"  />
-									</div>
-								</td>
-								<td class="text-center">
-									<?if ($nfs!='') {}else{?> 
-									<a href="javascript: void(0);" onClick="updtServicoLista('<?=$tmp_filtro["osservico_id"]?>');" title="Alterar" alt="Alterar"><i class="icon-save"></i></a>
-									<a href="javascript: void(0);" onClick="excluiServicoLista('<?=$tmp_filtro["osservico_id"]?>');" title="Excluir" alt="Excluir"><i class="icon-cancel"></i></a>
-									<?}?>
-								</td>
-							</tr>
-							<?
-						}
-						?>
-					</tbody>
-				<table>
 			</div>
 		</div>
 	</div>

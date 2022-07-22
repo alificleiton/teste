@@ -23,44 +23,37 @@ $os_obs_retirada = $_REQUEST["os_obs_retirada"];
 $os_tipo_servico = $_REQUEST["os_tipo_servico"];
 $produto_id_emprestimo = $_REQUEST["produto_id_emprestimo"];
 $numero_id = $_REQUEST["numero_id"];
+$usuario_tecnico_reparo = $_REQUEST["tecnico_reparo"];
 
 $osprodutopeca_valor_venda = $_REQUEST['osprodutopeca_valor_venda'];
 $osprodutopeca_desconto = $_REQUEST['osprodutopeca_desconto'];
 $osprodutopeca_valor_mao_obra = $_REQUEST['osprodutopeca_valor_mao_obra'];
-
+$usuario_aprovacao=$_REQUEST['usuario_aprovacao'];
 if(($produto_id_emprestimo == "") || ($produto_id_emprestimo == 'undefined')) 
 	$produto_id_emprestimo = 'null';
 
-
-$osservico_id = $_REQUEST["osservico_id"];
+// serviços
+/*
 $servico_id = $_REQUEST["servico_id"];
+$osservico_id = $_REQUEST["osservico_id"];
 $osservico_valor = str_replace(",", ".", str_replace(".", "", $_REQUEST["osservico_valor"]));
-$osservico_desconto = str_replace(",", ".", str_replace(".", "", $_REQUEST["osservico_desconto"]));
+$osservico_observacao = utf8_decode($_REQUEST["osservico_observacao"]);
 if (empty($osservico_valor))
 	$osservico_valor = 0;
+*/
 
 // ------------------------------------
 // confirmar análise técnica do produto
 // ------------------------------------
 if ($acao == "add"){
-	// B2X SES, Moema e Fortaleza
-    if ($clienteconfig_id == 101 || $clienteconfig_id == 110 || $clienteconfig_id == 112 || $clienteconfig_id == 123 || $clienteconfig_id == 124 || $clienteconfig_id == 131 || $clienteconfig_id == 133 || (strpos(B2X_SES_OS.B2X_CSP_OS,"|".$clienteconfig_id."|")>0) ) {
-        $sql = "SELECT osprodutopeca_valor_venda, osprodutopeca_valor_mao_obra, osprodutopeca_valor_desconto, osprodutopeca_qtde FROM tb_prod_os_produto_peca WHERE os_id = $os_id";
+    if ($clienteconfig_id == 123) {
+        $sql = "SELECT osprodutopeca_valor_venda, osprodutopeca_valor_mao_obra, osprodutopeca_valor_desconto FROM tb_prod_os_produto_peca WHERE os_id = $os_id";
         $res = $conn->sql($sql);
         while ($tmp = mysqli_fetch_array($res)) {
-			$valor_peca = $tmp["osprodutopeca_valor_venda"] * $tmp["osprodutopeca_qtde"];
-            $total_peca += $valor_peca;
+            $total_peca += $tmp["osprodutopeca_valor_venda"];
             $total_mo += $tmp["osprodutopeca_valor_mao_obra"];
             $total_desconto += $tmp["osprodutopeca_valor_desconto"];
-		}
-		
-		$sql = "SELECT * FROM tb_prod_os_servico WHERE os_id = $os_id";
-        $res = $conn->sql($sql);
-        while ($tmp = mysqli_fetch_array($res)) {
-            $total_mo += $tmp["osservico_valor"];
-            $total_desconto += $tmp["osservico_desconto"];
-		}
-
+        }
         $total = $total_peca + $total_mo;
         $total_liquido = $total_peca + $total_mo - $total_desconto;
         if (empty($total)) {
@@ -85,16 +78,17 @@ if ($acao == "add"){
             $total_peca = '0.00';
         }
         $sql_update = ", os_valor_total = $total, os_valor_maodeobra = $total_mo, os_valor_pecas = $total_peca, os_desconto_total = $total_desconto, os_desconto_pecas = $total_desconto, os_valor_liquido = $total_liquido, os_valor_liquido_maodeobra = $total_mo, os_valor_liquido_pecas = $total_peca";
-	}
+    }
 	$sql = "UPDATE tb_prod_os SET
-			status_id = '" . $status_id_novo . "',
-			os_usuario_avaliacao_tecnica = '" . $_SESSION["care-br"]["usuario_nome"] . "',
-			os_data_status = '" . getNow($clienteconfig_id) . "',
-			os_tipo_servico = '" . $os_tipo_servico . "',
-			os_data_update = '" . getNow($clienteconfig_id) . "',
-			produto_id_emprestimo = " . $produto_id_emprestimo . "
-			$sql_update
-			WHERE os_id = '" . $os_id . "'";
+				status_id = '" . $status_id_novo . "',
+				os_usuario_avaliacao_tecnica = '" . $_SESSION["care-br"]["usuario_nome"] . "',
+				usuario_tecnico_reparo = '" . $usuario_tecnico_reparo . "',
+				os_data_status = '" . getNow($clienteconfig_id) . "',
+				os_tipo_servico = '" . $os_tipo_servico . "',
+				os_data_update = '" . getNow($clienteconfig_id) . "',
+                produto_id_emprestimo = " . $produto_id_emprestimo . "
+                $sql_update
+				WHERE os_id = '" . $os_id . "'";
 	$conn->sql($sql);
 	
 	//Troca status de reserva do endereço
@@ -125,6 +119,18 @@ if ($acao == "add"){
 				osstatus_data = '" . getNow($clienteconfig_id) . "',
 				osstatus_comentario = 'ANÝLISE TÉCNICA'";
 	$conn->sql($sql);
+
+	//caso for add e cliente global Salvador
+    if ( ((in_array($clienteconfig_id, array('96'))) || (strpos(GLOBAL_OS,"|".$clienteconfig_id."|")>0) ) && (trim($usuario_aprovacao)!="")){
+    	//Adicionar usuario aprovacao Status log
+		$sql = "INSERT INTO tb_prod_os_status SET
+					os_id = '" . $os_id . "',
+					status_id = '" .$status_id. "',
+					usuario_id = '" . $_SESSION["care-br"]["usuario_id"] . "',
+					osstatus_data = '" . getNow($clienteconfig_id) . "', 
+					osstatus_comentario= 'usuario aprovacao inserido: ".$usuario_aprovacao."' ";
+		$conn->sql($sql);
+    }
 	
 	// -------------------------------------------------------
 	// gravar variáveis dinânicas de acordo com passo corrente
@@ -163,7 +169,7 @@ if ($acao == "add"){
 			
 			// caso campo corrente do dicionário esteja associado a uma OS, gravar dados na própria estrutura da OS,
 			// caso contrário, gravar na estrutura do dicionário de dados da OS
-			if (!empty($tmp_dados["dicionario_os_campo"])){
+			if ((!empty($tmp_dados["dicionario_os_campo"])) && ($tmp_dados["dicionario_os_campo"]!='status_id') ){
 				$sql = "UPDATE tb_prod_os SET 
 							" . $tmp_dados["dicionario_os_campo"] . " = " . $osclienteconfigpassodicionario_valor . " 
 							WHERE os_id = '" . $os_id . "'";
@@ -283,23 +289,10 @@ if ($acao == "add"){
 	*/
 
 	// Alterar Sub Status Barrafix quando enviar para Ag. Peca
-	if ($clienteconfig_id == '93' && $status_id_novo == 14) {
+	if (($clienteconfig_id == '93' || $clienteconfig_id == '131' || $clienteconfig_id == '132' || $clienteconfig_id == '163' || $clienteconfig_id == '176' || $clienteconfig_id == '178') && $status_id_novo == 14) {
 		$sql = "UPDATE tb_prod_os SET
 				os_sub_status = 'Aguardando Compra'
 				WHERE os_id = '" . $os_id . "'";
-		$conn->sql($sql);
-	}
-
-	// Casos do SES onde não passa por Ag. Peça e vai direto para Peça/Reparo
-	if ($status_id_novo == 16 && ($clienteconfig_id == 101 || $clienteconfig_id == 110 || $clienteconfig_id == 112 || $clienteconfig_id == 124 || $clienteconfig_id == 133 || (strpos(B2X_SES_OS,"|".$clienteconfig_id."|")>0) ) ) {
-		$usuario_id = $_SESSION["care-br"]["usuario_id"];
-		$sql = "INSERT INTO tb_prod_os_status SET
-			os_id = '$os_id',
-			status_id = 14,
-			usuario_id = '$usuario_id',
-			osstatus_data = NOW(),
-			osstatus_comentario = 'Possui saldo em estoque',
-			os_sub_status = '$os_sub_status'";
 		$conn->sql($sql);
 	}
 	
@@ -316,37 +309,16 @@ if ($acao == "add_peca_lista"){
 	$os_cobertura = $_REQUEST['os_cobertura'];
     $linha_id = $_REQUEST['linha_id'];
     $peca_complementar = $_REQUEST['peca_complementar'];
-    $os_cobertura = $_REQUEST['os_cobertura'];
     
     $sql_insert = '';
-    if ($clienteconfig_id == 20 || $clienteconfig_id == 82 || $clienteconfig_id == 123 || $clienteconfig_id == 110 || $clienteconfig_id == 112 || $clienteconfig_id == 101 || $clienteconfig_id == 124 || $clienteconfig_id == 131 || $clienteconfig_id == 133 || (strpos(B2X_SES_OS.B2X_CSP_OS,"|".$clienteconfig_id."|")>0) ) {
+    if ($clienteconfig_id == 20 || $clienteconfig_id == 82 || $clienteconfig_id == 93 || $clienteconfig_id == 97 || $clienteconfig_id == 123 || $clienteconfig_id == 127 || $clienteconfig_id == 131 || $clienteconfig_id == 132 || $clienteconfig_id == 136 || $clienteconfig_id == 137 || $clienteconfig_id == 138 || $clienteconfig_id == 139 || $clienteconfig_id == 163 || $clienteconfig_id == 168 || $clienteconfig_id == 176 || $clienteconfig_id == 178 || (strpos(MULTIFIX,$clienteconfig_id)>0) ) {
         $sql_insert = ", osprodutopeca_cobrar = 'S'";
     }
 
     $sql_complementar = "";
     if ($peca_complementar == 'Sim') {
         $sql_complementar = ", osprodutopeca_complementar = 'S'";
-	}
-	
-	//Verificar se j� existe uma pe�a com cobrar sim, se n�o tiver, adicionar um servi�o de M�o de Obra
-	$sql = "SELECT osprodutopeca_id FROM tb_prod_os_produto_peca WHERE os_id = '$os_id' AND osprodutopeca_cobrar = 'S'";
-	$res = $conn->sql($sql);
-	if (mysqli_num_rows($res) == 0) {
-		$cobertura = trim(substr($os_cobertura, 0, 3));
-		$sql = "SELECT servico_id, valor FROM tb_cad_servico WHERE clienteconfig_id = '$clienteconfig_id' AND titulo = 'Mao de Obra - $cobertura' LIMIT 1";
-		$res = $conn->sql($sql);
-		$dados = mysqli_fetch_array($res);
-		$sql = "SELECT * FROM tb_prod_os_servico WHERE os_id = '$os_id' AND servico_id = '{$dados["servico_id"]}'";
-		$res = $conn->sql($sql);
-		if (mysqli_num_rows($res) == 0) {
-			$sql = "INSERT INTO tb_prod_os_servico 
-				SET os_id = '$os_id',
-				servico_id = '{$dados["servico_id"]}',
-				osservico_valor = '{$dados["valor"]}',
-				osservico_desconto = 0";
-			$conn->sql($sql);
-		}
-	}
+    }
 
 	$sql = "INSERT INTO tb_prod_os_produto_peca SET
 				os_id = '" . $os_id . "',
@@ -385,7 +357,7 @@ if ($acao == "add_peca_lista"){
 							INNER	JOIN tb_prod_nfe_item f
 							on f.nfe_id = d.nfe_id
 							and produto_id = '". $tmp_filtro_peca['produto_id_peca']."'
-							and (d.clienteconfig_id = '".$clienteconfig_id. "' or d.clienteconfig_id = 7)
+							and (d.clienteconfig_id = '".$clienteconfig_id. "' or d.clienteconfig_id = 7 or d.clienteconfig_id = 190)
 							order by nfi_id desc limit 1";
 					$result_filtro_peca_unitario = $conn->sql($sql_peca_unit);
 					
@@ -407,7 +379,7 @@ if ($acao == "add_peca_lista"){
 							INNER JOIN tb_prod_nfe_item f
 							on  f.nfe_id = d.nfe_id
 							and produto_id in($os_dt)
-							and (d.clienteconfig_id = 11 or d.clienteconfig_id = 7)
+							and (d.clienteconfig_id = 11 or d.clienteconfig_id = 7 or d.clienteconfig_id = 190)
 							order by nfi_id desc 
 							limit 1";
 		$result_filtro_dt_peca_ = $conn->sql($sql_dt_min_pecas);
@@ -450,17 +422,15 @@ if ($acao == "updt_peca_lista"){
 				WHERE osprodutopeca_id = '" . $osprodutopeca_id . "'";
     $conn->sql($sql);
     
-    // B2X Moema / Fortaleza / SES grava os valores da peça no Análise
-    if ($clienteconfig_id == 101 || $clienteconfig_id == 110 || $clienteconfig_id == 112 || $clienteconfig_id == 123 || $clienteconfig_id == 124 || $clienteconfig_id == 131 || $clienteconfig_id == 133 || (strpos(B2X_SES_OS.B2X_CSP_OS,"|".$clienteconfig_id."|")>0) ) {
+    // B2X Moema grava os valores da peça no Análise
+    if ($clienteconfig_id == 123) {
         $osprodutopeca_valor_venda = str_replace('.', '', $osprodutopeca_valor_venda);
         $osprodutopeca_valor_venda = str_replace(',', '.', $osprodutopeca_valor_venda);
         $osprodutopeca_valor_mao_obra = str_replace('.', '', $osprodutopeca_valor_mao_obra);
-		$osprodutopeca_valor_mao_obra = str_replace(',', '.', $osprodutopeca_valor_mao_obra);
-		// M�o de Obra na tb_prod_os_produto_peca ser� sempre zerada
-		$osprodutopeca_valor_mao_obra = '0.00';
+        $osprodutopeca_valor_mao_obra = str_replace(',', '.', $osprodutopeca_valor_mao_obra);
         $osprodutopeca_desconto = str_replace('.', '', $osprodutopeca_desconto);
         $osprodutopeca_desconto = str_replace(',', '.', $osprodutopeca_desconto);
-        if ($osprodutopeca_cobrar == 'N' || $osprodutopeca_cobrar == 'cortesia') {
+        if ($osprodutopeca_cobrar == 'N') {
             $osprodutopeca_valor_venda = '0.00';
             $osprodutopeca_valor_mao_obra = '0.00';
             $osprodutopeca_desconto = '0.00';
@@ -499,7 +469,7 @@ if ($acao == "updt_peca_lista"){
 							INNER	JOIN tb_prod_nfe_item f
 							on f.nfe_id = d.nfe_id
 							and produto_id = '". $tmp_filtro_peca['produto_id_peca']."'
-							and (d.clienteconfig_id = '".$clienteconfig_id. "' or d.clienteconfig_id = 7)
+							and (d.clienteconfig_id = '".$clienteconfig_id. "' or d.clienteconfig_id = 7 or d.clienteconfig_id = 190)
 							order by nfi_id desc limit 1";
 					$result_filtro_peca_unitario = $conn->sql($sql_peca_unit);
 					
@@ -521,7 +491,7 @@ if ($acao == "updt_peca_lista"){
 							INNER JOIN tb_prod_nfe_item f
 							on  f.nfe_id = d.nfe_id
 							and produto_id in($os_dt)
-							and (d.clienteconfig_id = 11 or d.clienteconfig_id = 7)
+							and (d.clienteconfig_id = 11 or d.clienteconfig_id = 7 or d.clienteconfig_id = 190)
 							order by nfi_id desc 
 							limit 1";
 		$result_filtro_dt_peca_ = $conn->sql($sql_dt_min_pecas);
@@ -692,7 +662,7 @@ if ($acao == "dlt"){
 							INNER	JOIN tb_prod_nfe_item f
 							on f.nfe_id = d.nfe_id
 							and produto_id = '". $tmp_filtro_peca['produto_id_peca']."'
-							and (d.clienteconfig_id = '".$clienteconfig_id. "' or d.clienteconfig_id = 7)
+							and (d.clienteconfig_id = '".$clienteconfig_id. "' or d.clienteconfig_id = 7 or d.clienteconfig_id = 190)
 							order by nfi_id desc limit 1";
 					$result_filtro_peca_unitario = $conn->sql($sql_peca_unit);
 					
@@ -714,7 +684,7 @@ if ($acao == "dlt"){
 							INNER JOIN tb_prod_nfe_item f
 							on  f.nfe_id = d.nfe_id
 							and produto_id in($os_dt)
-							and (d.clienteconfig_id = 11 or d.clienteconfig_id = 7)
+							and (d.clienteconfig_id = 11 or d.clienteconfig_id = 7 or d.clienteconfig_id = 190)
 							order by nfi_id desc 
 							limit 1";
 		$result_filtro_dt_peca_ = $conn->sql($sql_dt_min_pecas);
@@ -758,14 +728,13 @@ if ($acao == "retirar_produto_emprestimo"){
 // adicionar serviço para reparo do produto
 // ----------------------------------------
 if ($acao == "add_servico_lista"){
-
-	$sql = "INSERT INTO tb_prod_os_servico SET
-				os_id = '$os_id',
-				servico_id = '$servico_id',
-				osservico_desconto = '0',
-				osservico_valor = (SELECT valor
-										FROM tb_cad_servico a
-										WHERE a.servico_id = '$servico_id' LIMIT 0,1)";
+	$sql = "INSERT INTO tb_prod_os_tipo_servico SET
+				os_id = '" . $os_id . "',
+				servico_id = '" . $servico_id . "',
+				osservico_valor = (SELECT IF (b.servicocliente_valor <= 0, a.servico_valor_padrao , b.servicocliente_valor)
+										FROM tb_cad_os_tipo_servico a
+										INNER JOIN tb_cad_os_tipo_servico_empresa_cliente b ON a.servico_id = b.servico_id AND b.clienteconfig_id = '" . $clienteconfig_id . "'
+										WHERE a.servico_id = '" . $servico_id . "' LIMIT 0,1)";
 	$conn->sql($sql);
 }
 
@@ -773,53 +742,11 @@ if ($acao == "add_servico_lista"){
 // alterar serviço para reparo do produto já adicionado
 // ----------------------------------------------------
 if ($acao == "updt_servico_lista"){
-	$sql = "UPDATE tb_prod_os_servico SET
+	$sql = "UPDATE tb_prod_os_tipo_servico SET
 				osservico_valor = '" . $osservico_valor . "',
-				osservico_desconto = '" . $osservico_desconto . "'
+				osservico_observacao = '" . $osservico_observacao . "'
 				WHERE osservico_id = '" . $osservico_id . "'";
 	$conn->sql($sql);
-
-	$sql = "select os_id from tb_prod_os_servico where osservico_id = '$osservico_id'";
-	$os_id = $conn->getData($sql)[0]['os_id'];
-
-	if($os_id > 0){
-		// atualiza tb_prod_os
-		$sql = "select 
-			SUM(osprodutopeca_valor_venda) as valor_venda,
-			SUM(osprodutopeca_valor_desconto) as desconto
-			from tb_prod_os_produto_peca 
-			where os_id = '$os_id' and osprodutopeca_cobrar = 'S'";
-		$pecas = $conn->getData($sql)[0];
-
-		$sql = "select
-		SUM(osservico_valor) as valor_mo,
-		SUM(osservico_desconto) as desconto
-		FROM tb_prod_os_servico
-		where os_id = '$os_id'";
-		$mo = $conn->getData($sql)[0];
-
-		$os_valor_pecas = (float) $pecas['valor_venda'];
-		$os_desconto_pecas = (float) $pecas['desconto'];
-		$os_valor_maodeobra = (float) $mo['valor_mo'];
-		$os_desconto_maodeobra = (float) $mo['desconto'];
-		$os_desconto_total = $os_desconto_pecas + $os_desconto_maodeobra;
-		$os_valor_liquido_pecas = $os_valor_pecas - $os_desconto_pecas;
-		$os_valor_liquido_maodeobra = $os_valor_maodeobra - $os_desconto_maodeobra;
-		$os_valor_liquido = $os_valor_liquido_pecas + $os_valor_liquido_maodeobra;
-
-		$sql = "update tb_prod_os set 
-		os_valor_pecas = '$os_valor_pecas',
-		os_desconto_pecas = '$os_desconto_pecas',
-		os_valor_maodeobra = '$os_valor_maodeobra',
-		os_desconto_maodeobra = '$os_desconto_maodeobra',
-		os_desconto_total = '$os_desconto_total',
-		os_valor_liquido_pecas = '$os_valor_liquido_pecas',
-		os_valor_liquido_maodeobra = '$os_valor_liquido_maodeobra',
-		os_valor_liquido = '$os_valor_liquido'
-		where os_id = $os_id";
-
-		$conn->sql($sql);	
-	}
 }
 
 // -----------------------------
@@ -827,7 +754,7 @@ if ($acao == "updt_servico_lista"){
 // -----------------------------
 if ($acao == "dlt_servico_lista"){
 	$sql = "DELETE 
-				FROM tb_prod_os_servico
+				FROM tb_prod_os_tipo_servico
 				WHERE osservico_id = '" . $osservico_id . "'";
 	$conn->sql($sql);
 }

@@ -50,6 +50,7 @@ if ($acao == "add"){
 				INNER JOIN tb_cad_idioma_status c ON b.status_id = c.status_id AND c.idioma_id = '" . $_SESSION["care-br"]["idioma_id"] . "'
 				INNER JOIN tb_cad_usuario d ON a.usuario_id = d.usuario_id
 				LEFT JOIN tb_cad_empresa e ON a.empresa_id_varejo = e.empresa_id
+				LEFT JOIN tb_prod_os_planner_tecnico pt ON pt.id_planner_tecnico = a.usuario_tecnico_reparo
 				INNER JOIN tb_cad_produto f ON a.produto_id = f.produto_id
 				INNER JOIN tb_cad_idioma_produto g ON f.produto_id = g.produto_id AND g.idioma_id = '" . $_SESSION["care-br"]["idioma_id"] . "'
 				INNER JOIN tb_cad_empresa h ON f.empresa_id = h.empresa_id
@@ -88,148 +89,148 @@ if ($acao == "add"){
 	  </style>
 	  <script>
 
-		(function( $ ) {
+	  (function( $ ) {
 
-			$.widget( "custom.combobox", {
-			_create: function() {
-				this.wrapper = $( "<span>" )
-				.addClass( "custom-combobox" )
-				.insertAfter( this.element );
-		
-				this.element.hide();
-				this._createAutocomplete();
-				this._createShowAllButton();
-			},
-		
-			_createAutocomplete: function() {
-				var selected = this.element.children( ":selected" ),
-				value = selected.val() ? selected.text() : "";
-		
-				this.input = $( "<input>" )
-				.appendTo( this.wrapper )
-				.val( value )
-				.attr( "title", "" )
-				.addClass( "custom-combobox-input ui-widget ui-widget-content ui-state-default ui-corner-left" )
-				.autocomplete({
-					delay: 0,
-					minLength: 0,
-					source: $.proxy( this, "_source" )
-				})
-				.tooltip({
-					tooltipClass: "ui-state-highlight"
-				});
-		
-				this._on( this.input, {
-				autocompleteselect: function( event, ui ) {
-					ui.item.option.selected = true;
-					this._trigger( "select", event, {
-					item: ui.item.option
-					});
-				},
-		
-				autocompletechange: "_removeIfInvalid"
-				});
-			},
-		
-			_createShowAllButton: function() {
-				var input = this.input,
-				wasOpen = false;
-		
-				$( "<a>" )
-				.attr( "tabIndex", -1 )
-				.attr( "title", "Exibir itens" )
-				.tooltip()
-				.appendTo( this.wrapper )
-				.button({
-					icons: {
-					primary: "ui-icon-triangle-1-s"
-					},
-					text: false
-				})
-				.removeClass( "ui-corner-all" )
-				.addClass( "custom-combobox-toggle ui-corner-right" )
-				.mousedown(function() {
-					wasOpen = input.autocomplete( "widget" ).is( ":visible" );
-				})
-				.click(function() {
-					input.focus();
-		
-					// Close if already visible
-					if ( wasOpen ) {
-					return;
-					}
-		
-					// Pass empty string as value to search for, displaying all results
-					input.autocomplete( "search", "" );
-				});
-			},
-		
-			_source: function( request, response ) {
-				var matcher = new RegExp( $.ui.autocomplete.escapeRegex(request.term), "i" );
-				response( this.element.children( "option" ).map(function() {
-				var text = $( this ).text();
-				if ( this.value && ( !request.term || matcher.test(text) ) )
-					return {
-					label: text,
-					value: text,
-					option: this
-					};
-				}) );
-			},
-		
-			_removeIfInvalid: function( event, ui ) {
-		
-				// Selected an item, nothing to do
-				if ( ui.item ) {
-				return;
-				}
-		
-				// Search for a match (case-insensitive)
-				var value = this.input.val(),
-				valueLowerCase = value.toLowerCase(),
-				valid = false;
-				this.element.children( "option" ).each(function() {
-				if ( $( this ).text().toLowerCase() === valueLowerCase ) {
-					this.selected = valid = true;
-					return false;
-				}
-				});
-		
-				// Found a match, nothing to do
-				if ( valid ) {
-				return;
-				}
-		
-				// Remove invalid value
-				this.input
-				.val( "" )
-				.attr( "title", value + " invalido! Escolha um item da lista" )
-				.tooltip( "open" );
-				this.element.val( "" );
-				this._delay(function() {
-				this.input.tooltip( "close" ).attr( "title", "" );
-				}, 2500 );
-				this.input.autocomplete( "instance" ).term = "";
-			},
-		
-			_destroy: function() {
-				this.wrapper.remove();
-				this.element.show();
-			}
-			});
-		})( jQuery );
+	    $.widget( "custom.combobox", {
+	      _create: function() {
+	        this.wrapper = $( "<span>" )
+	          .addClass( "custom-combobox" )
+	          .insertAfter( this.element );
+	 
+	        this.element.hide();
+	        this._createAutocomplete();
+	        this._createShowAllButton();
+	      },
+	 
+	      _createAutocomplete: function() {
+	        var selected = this.element.children( ":selected" ),
+	          value = selected.val() ? selected.text() : "";
+	 
+	        this.input = $( "<input>" )
+	          .appendTo( this.wrapper )
+	          .val( value )
+	          .attr( "title", "" )
+	          .addClass( "custom-combobox-input ui-widget ui-widget-content ui-state-default ui-corner-left" )
+	          .autocomplete({
+	            delay: 0,
+	            minLength: 0,
+	            source: $.proxy( this, "_source" )
+	          })
+	          .tooltip({
+	            tooltipClass: "ui-state-highlight"
+	          });
+	 
+	        this._on( this.input, {
+	          autocompleteselect: function( event, ui ) {
+	            ui.item.option.selected = true;
+	            this._trigger( "select", event, {
+	              item: ui.item.option
+	            });
+	          },
+	 
+	          autocompletechange: "_removeIfInvalid"
+	        });
+	      },
+	 
+	      _createShowAllButton: function() {
+	        var input = this.input,
+	          wasOpen = false;
+	 
+	        $( "<a>" )
+	          .attr( "tabIndex", -1 )
+	          .attr( "title", "Exibir itens" )
+	          .tooltip()
+	          .appendTo( this.wrapper )
+	          .button({
+	            icons: {
+	              primary: "ui-icon-triangle-1-s"
+	            },
+	            text: false
+	          })
+	          .removeClass( "ui-corner-all" )
+	          .addClass( "custom-combobox-toggle ui-corner-right" )
+	          .mousedown(function() {
+	            wasOpen = input.autocomplete( "widget" ).is( ":visible" );
+	          })
+	          .click(function() {
+	            input.focus();
+	 
+	            // Close if already visible
+	            if ( wasOpen ) {
+	              return;
+	            }
+	 
+	            // Pass empty string as value to search for, displaying all results
+	            input.autocomplete( "search", "" );
+	          });
+	      },
+	 
+	      _source: function( request, response ) {
+	        var matcher = new RegExp( $.ui.autocomplete.escapeRegex(request.term), "i" );
+	        response( this.element.children( "option" ).map(function() {
+	          var text = $( this ).text();
+	          if ( this.value && ( !request.term || matcher.test(text) ) )
+	            return {
+	              label: text,
+	              value: text,
+	              option: this
+	            };
+	        }) );
+	      },
+	 
+	      _removeIfInvalid: function( event, ui ) {
+	 
+	        // Selected an item, nothing to do
+	        if ( ui.item ) {
+	          return;
+	        }
+	 
+	        // Search for a match (case-insensitive)
+	        var value = this.input.val(),
+	          valueLowerCase = value.toLowerCase(),
+	          valid = false;
+	        this.element.children( "option" ).each(function() {
+	          if ( $( this ).text().toLowerCase() === valueLowerCase ) {
+	            this.selected = valid = true;
+	            return false;
+	          }
+	        });
+	 
+	        // Found a match, nothing to do
+	        if ( valid ) {
+	          return;
+	        }
+	 
+	        // Remove invalid value
+	        this.input
+	          .val( "" )
+	          .attr( "title", value + " invalido! Escolha um item da lista" )
+	          .tooltip( "open" );
+	        this.element.val( "" );
+	        this._delay(function() {
+	          this.input.tooltip( "close" ).attr( "title", "" );
+	        }, 2500 );
+	        this.input.autocomplete( "instance" ).term = "";
+	      },
+	 
+	      _destroy: function() {
+	        this.wrapper.remove();
+	        this.element.show();
+	      }
+	    });
+	  })( jQuery );
 
-		function localArmazenamento(local, numero_id){
-			$.ajax({
-			type: "POST",
-			url: 'os_controle_edicao.php',
-			data: {acao: 'get_campos_local', local_id: local, numero_id: numero_id},
-			async: false,
-			success: function(resposta) {
-				$(".numero_local_os").html(resposta);
-			}
-			});
-		}
+	  function localArmazenamento(local, numero_id){
+		$.ajax({
+		  type: "POST",
+		  url: 'os_controle_edicao.php',
+		  data: {acao: 'get_campos_local', local_id: local, numero_id: numero_id},
+		  async: false,
+		  success: function(resposta) {
+			$(".numero_local_os").html(resposta);
+		  }
+		});
+	}
 
 	  </script>
 
@@ -281,31 +282,6 @@ if ($acao == "add"){
 					$("#agenda_tecnico").show();
 				}
 			});
-            $(".os_sub_status").change(function(){
-                var b2x_csp_os="<?=B2X_CSP_OS?>";
-				$.ajax({
-				  type: "POST",
-				  url: 'os_controle_aguarda_analise_edicao.php',
-				  success: function() {
-				  var verificacliente="<?=$clienteconfig_id?>";	
-				  if (verificacliente == 123 || verificacliente == 131 || (b2x_csp_os.indexOf("|"+verificacliente+"|")>0) ){
-					  if ($(".os_sub_status").val()=="Orçamento Reprovado"){	
-					   $("#status_id_novo").append('<option title="Aguardando Peça" alt="Aguardando Peça" value="14">Peça</option>');
-					   $("#status_id_novo").append('<option title="Produto aguardando emissõo da NF Serviços" alt="Produto aguardando emissão da NF Serviços" value="24">Ag. Faturamento</option>');
-
-					  }
-					  else{
-					  	$("#status_id_novo option[value='14']").remove();
-	                    $("#status_id_novo option[value='24']").remove();
-					  }
-				   }  
-				}
-
-				});	
-			
-				
-               
-			});
 
 
 			var tipo_servico = $("#os_tipo_servico").val();
@@ -313,6 +289,37 @@ if ($acao == "add"){
 			if(tipo_servico == 18){
 				//getStatusNovo();
 			}
+
+			$(".os_solicitante_servico").change(function(){
+
+				$.ajax({
+				  type: "POST",
+				  url: 'os_controle_aguarda_analise_edicao.php',
+				  success: function() {
+				  var verificacliente="<?=$clienteconfig_id?>";	
+				  if (verificacliente==131){
+					  if ($(".os_solicitante_servico").val()=="X09-Recusa no reparo"){	
+					    $("#status_id_novo").append('<option title="Finalizado" alt="Finalizado" value="26">Finalizado</option>');
+					    $("#status_id_novo option[value='13']").hide();
+					  	$("#status_id_novo option[value='14']").hide();
+					  	$("#status_id_novo option[value='16']").hide();
+
+					  }
+					  else{
+					  	$("#status_id_novo option[value='26']").remove();
+					  	$("#status_id_novo option[value='13']").show();
+					  	$("#status_id_novo option[value='14']").show();
+					  	$("#status_id_novo option[value='16']").show();
+
+					  }
+				   }  
+				}
+
+				});	
+
+
+
+			});
 
 
 			$("#os_tipo_servico").change(function(){
@@ -336,7 +343,8 @@ if ($acao == "add"){
 			});			
 
 
-			getPecaLista();getServicoLista();
+			getPecaLista();
+			getServicoLista();
 			
 			// setar status de acordo com checklist
 			getStatusNovo();
@@ -393,56 +401,7 @@ if ($acao == "add"){
 								return false;
 							}
 						}
-
-						// Verifica os preços
-						var ok = 'ok';
-						$(".osprodutopeca_id").each(function(){
-							osprodutopeca_id = $(this).val();
-							var valor_venda = $("#valor_venda_" + osprodutopeca_id).val();
-							var valor_desconto = $("#valor_desconto_" + osprodutopeca_id).val();
-							// var valor_maodeobra = $("#valor_maodeobra_" + osprodutopeca_id).val();
-							var peca_cobrar = $("#peca_cobrar_" + osprodutopeca_id).val();
-							var osprodutopeca_valor_venda = $("#osprodutopeca_valor_venda_" + osprodutopeca_id).val();
-							osprodutopeca_valor_venda = osprodutopeca_valor_venda.replace('.', '');
-							osprodutopeca_valor_venda = osprodutopeca_valor_venda.replace(',', '.');
-							if (osprodutopeca_valor_venda == '')
-								osprodutopeca_valor_venda = '0.00';
-							var osprodutopeca_desconto = $("#osprodutopeca_desconto_" + osprodutopeca_id).val();
-							osprodutopeca_desconto = osprodutopeca_desconto.replace('.', '');
-							osprodutopeca_desconto = osprodutopeca_desconto.replace(',', '.');
-							if (osprodutopeca_desconto == '')
-								osprodutopeca_desconto = '0.00';
-							// var osprodutopeca_valor_mao_obra = $("#osprodutopeca_valor_mao_obra_" + osprodutopeca_id).val();
-							// osprodutopeca_valor_mao_obra = osprodutopeca_valor_mao_obra.replace('.', '');
-							// osprodutopeca_valor_mao_obra = osprodutopeca_valor_mao_obra.replace(',', '.');
-							var osprodutopeca_cobrar = $("#osprodutopeca_cobrar_" + osprodutopeca_id).val();
-							// if (osprodutopeca_valor_mao_obra == '')
-							// 	osprodutopeca_valor_mao_obra = '0.00';
-							if (osprodutopeca_cobrar == 'S') {
-								if (valor_venda != osprodutopeca_valor_venda) {
-									alert('Valor de venda não foi salvo!');
-									ok = 'nok';
-									return false;
-								} else if (valor_desconto != osprodutopeca_desconto) {
-									alert('Valor de desconto não foi salvo!');
-									ok = 'nok';
-									return false;
-								// } else if (valor_maodeobra != osprodutopeca_valor_mao_obra) {
-								// 	alert('Valor de mão de obra não foi salvo!');
-								// 	ok = 'nok';
-								// 	return false;
-								} else if (peca_cobrar != osprodutopeca_cobrar) {
-									alert('Campo "Cobrar" não foi salvo!');
-									ok = 'nok';
-									return false;
-								}
-							}
-						});
-
-						if (ok == 'nok') {
-							return false;
-						}
-
+				
 						$("#numero_id").val($(".numero_local_os").val());
 				
 						// confirmar operação e submeter formulário via ajax
@@ -569,9 +528,8 @@ if ($acao == "add"){
 					  		msg = msg + osprodutopeca_id + ':' + qtd_solicitar  + ';' ;
 
 						}
-						var b2x_csp_os="<?=B2X_CSP_OS?>";
 
-                        if (($("#clienteconfig_id").val() == 123 || $('#clienteconfig_id').val() == 131 || (b2x_csp_os.indexOf("|"+$('#clienteconfig_id').val()+"|")>0) ) && (produto_id_estoque == 314501 || produto_id_estoque == 314502 || produto_id_estoque == 314503)) {
+                        if ($("#clienteconfig_id").val() == 123 && (produto_id_estoque == 314501 || produto_id_estoque == 314502 || produto_id_estoque == 314503)) {
                             msg = '';
                         }
 													
@@ -811,10 +769,11 @@ if ($acao == "add"){
 		}
 
 		
-		function excluiCadastro(osprodutopeca_id, produto_id_peca, todos){
-			if (todos == 'S') {
-				var os_id = $("#os_id").val();
-				var clienteconfig_id = $("#clienteconfig_id").val();
+		function excluiCadastro(osprodutopeca_id, produto_id_peca){
+			if (confirm("<?=fct_get_var('global.php', 'var_confirma_exclusao', $_SESSION["care-br"]["idioma_id"])?>")){
+				
+	            var os_id = $("#os_id").val();
+	            var clienteconfig_id = $("#clienteconfig_id").val();
 
 				os_id = $("#os_id").val();
 				qtde_utilizada_baixada = $("#estoque_status_62_" + osprodutopeca_id).val();
@@ -825,14 +784,14 @@ if ($acao == "add"){
 				estoque_id = $("#estoque_id_" + osprodutopeca_id).val();
 
 				$.ajax({
-					type: "POST",
-					url: 'os_controle_aguarda_analise_acao.php',
-					data: {acao: 'dlt', estoque_id:estoque_id, qtde_defeito_baixada: qtde_defeito_baixada, qtde_utilizada_baixada:qtde_utilizada_baixada, qtde_laboratorio:qtde_laboratorio,osprodutopeca_id: osprodutopeca_id, os_id: os_id, produto_id_peca: produto_id_peca, clienteconfig_id: clienteconfig_id},
-					async: false,
-					success: function(data) {
-						//alert(data);
+				  	type: "POST",
+				  	url: 'os_controle_aguarda_analise_acao.php',
+				  	data: {acao: 'dlt', estoque_id:estoque_id, qtde_defeito_baixada: qtde_defeito_baixada, qtde_utilizada_baixada:qtde_utilizada_baixada, qtde_laboratorio:qtde_laboratorio,osprodutopeca_id: osprodutopeca_id, os_id: os_id, produto_id_peca: produto_id_peca, clienteconfig_id: clienteconfig_id},
+				  	async: false,
+				  	success: function(data) {
+				  		//alert(data);
 						getPecaLista();
-						if (clienteconfig_id == 20 || clienteconfig_id == 82) {
+						if (clienteconfig_id == 20 || clienteconfig_id == 82 || clienteconfig_id == 136 || clienteconfig_id == 137 || clienteconfig_id == 138 || clienteconfig_id == 139) {
 							var os_cobertura = $("#os_cobertura").val();
 							if (os_cobertura == 'GARANTEC-ESTENDIDA' || os_cobertura == 'LUIZASEG-ESTENDIDA' || os_cobertura == 'CARDIF-ESTENDIDA' || os_cobertura == 'ZURICH-ESTENDIDA' || os_cobertura == 'ZURICH-FAST-ESTENDIDA' || os_cobertura == 'ASSURANT-ESTENDIDA' || os_cobertura == 'VIRGINIA-ESTENDIDA' || os_cobertura == 'ASSURANT CELULAR-ESTENDIDA' || os_cobertura == 'VIRGINIA CELULAR-ESTENDIDA') {	
 								var qtde_item = $('#tabela_peca>tbody>tr').length;
@@ -844,70 +803,14 @@ if ($acao == "add"){
 								}
 							}
 						}
-					}
+				  	}
 				});
 					
 				if (qtde_utilizada_baixada > 0 || qtde_laboratorio > 0){
 
 					alert('Pecas utilizada(s) e no laboratorio foram movidas para NAO UTILIZADA(S) para dar entrada no Estoque!');
 				}
-			} else {
-				if (confirm("<?=fct_get_var('global.php', 'var_confirma_exclusao', $_SESSION["care-br"]["idioma_id"])?>")){
-					
-					var os_id = $("#os_id").val();
-					var clienteconfig_id = $("#clienteconfig_id").val();
-
-					os_id = $("#os_id").val();
-					qtde_utilizada_baixada = $("#estoque_status_62_" + osprodutopeca_id).val();
-					qtde_nao_utilizada_baixada = $("#estoque_status_71_" + osprodutopeca_id).val();
-					qtde_defeito_baixada = $("#estoque_status_70_" + osprodutopeca_id).val();
-					qtde_laboratorio = $("#estoque_status_68_" + osprodutopeca_id).val();
-					qtde = $("#osprodutopeca_qtde_" + osprodutopeca_id).val();
-					estoque_id = $("#estoque_id_" + osprodutopeca_id).val();
-
-					$.ajax({
-						type: "POST",
-						url: 'os_controle_aguarda_analise_acao.php',
-						data: {acao: 'dlt', estoque_id:estoque_id, qtde_defeito_baixada: qtde_defeito_baixada, qtde_utilizada_baixada:qtde_utilizada_baixada, qtde_laboratorio:qtde_laboratorio,osprodutopeca_id: osprodutopeca_id, os_id: os_id, produto_id_peca: produto_id_peca, clienteconfig_id: clienteconfig_id},
-						async: false,
-						success: function(data) {
-							//alert(data);
-							getPecaLista();
-							if (clienteconfig_id == 20 || clienteconfig_id == 82) {
-								var os_cobertura = $("#os_cobertura").val();
-								if (os_cobertura == 'GARANTEC-ESTENDIDA' || os_cobertura == 'LUIZASEG-ESTENDIDA' || os_cobertura == 'CARDIF-ESTENDIDA' || os_cobertura == 'ZURICH-ESTENDIDA' || os_cobertura == 'ZURICH-FAST-ESTENDIDA' || os_cobertura == 'ASSURANT-ESTENDIDA' || os_cobertura == 'VIRGINIA-ESTENDIDA' || os_cobertura == 'ASSURANT CELULAR-ESTENDIDA' || os_cobertura == 'VIRGINIA CELULAR-ESTENDIDA') {	
-									var qtde_item = $('#tabela_peca>tbody>tr').length;
-									var valor_total = $("#valor_total").val();
-									if (valor_total < 110) {
-										if (qtde_item == 0) {
-											cont_total = 0;
-										}
-									}
-								}
-							}
-						}
-					});
-						
-					if (qtde_utilizada_baixada > 0 || qtde_laboratorio > 0){
-
-						alert('Pecas utilizada(s) e no laboratorio foram movidas para NAO UTILIZADA(S) para dar entrada no Estoque!');
-					}
-				}
 			}
-		}
-
-		function excluiCadastroTodos() {
-			if (confirm("<?=fct_get_var('global.php', 'var_confirma_exclusao', $_SESSION["care-br"]["idioma_id"])?>")) {
-				var os_id = $("#os_id").val();
-				var clienteconfig_id = $("#clienteconfig_id").val();
-				var osprodutopeca_id;
-				$(".osprodutopeca_id").each(function(){
-					osprodutopeca_id = $(this).val();
-					var produto_id_peca = $("#produto_id_estoque_" + osprodutopeca_id).val();
-					excluiCadastro(osprodutopeca_id, produto_id_peca, 'S');
-				});
-			}
-			getPecaLista();
 		}
 		
 		function getPecaLista(){
@@ -951,7 +854,7 @@ if ($acao == "add"){
 			var peca_complementar = '';
 			if(clienteconfig_id == '11'){
 				os_cobertura = 'ORCAMENTO';
-			} else if(clienteconfig_id == 101 || clienteconfig_id == 110 || clienteconfig_id == 112 || clienteconfig_id == 123 || clienteconfig_id == 124 || clienteconfig_id == 131 || (b2x_csp_os.indexOf("|"+clienteconfig_id+"|")>0) ) {
+			} else if(clienteconfig_id == '123') {
 			    peca_complementar = $("#peca_complementar").val();
 			}
 
@@ -964,9 +867,383 @@ if ($acao == "add"){
 			  	//alert(data);
 				getPecaLista();
 				getServicoLista();
+				if (clienteconfig_id == 20 || clienteconfig_id == 82 || clienteconfig_id == 136 || clienteconfig_id == 137 || clienteconfig_id == 138 || clienteconfig_id == 139) {
+					var valor_total = $("#valor_total").val();
+					if (os_cobertura == 'GARANTEC-ESTENDIDA' || os_cobertura == 'LUIZASEG-ESTENDIDA' || os_cobertura == 'CARDIF-ESTENDIDA' || os_cobertura == 'ZURICH-ESTENDIDA' || os_cobertura == 'ZURICH-FAST-ESTENDIDA' || os_cobertura == 'ASSURANT-ESTENDIDA' || os_cobertura == 'VIRGINIA-ESTENDIDA' || os_cobertura == 'ASSURANT CELULAR-ESTENDIDA' || os_cobertura == 'VIRGINIA CELULAR-ESTENDIDA') {
+						if (valor_total > 110 && cont_total == 0) {
+							alert("O valor das pecas ultrapassou R$110,00. Sub Status alterado para AGP-FORA DO CUSTO");
+							$(".os_sub_status").val("AGP-FORA DO CUSTO");
+							cont_total++;
+						}
+					}
+				}
 			  }
 			});
 		}
+
+		function gerarNf(tipo,os_id,empresacliente_id){
+        	var clienteconfig_id = $("#clienteconfig_id").val();
+        	var cliente_id = $("#cliente_id").val();
+
+        	// Informar que o valor total é diferente do valor recebido
+			var valor_total = parseFloat($("#os_valor_liquido").val());
+			var valor_recebido = parseFloat($("#valor_recebido").val());
+			//grupo multifix
+            var clientes="<?=MULTIFIX?>";
+			if ( (valor_recebido < valor_total) && (clientes.indexOf("|"+$("#clienteconfig_id").val()+"|")>0)	&& tipo!='gerar_nfs' ) {
+				alert ("O valor recebido é menor do que o valor total do orçamento.");
+				return false;
+				
+			}
+			//cancelar NFS
+			if(tipo == 'dialogCancelaNFSe'){
+				setTimeout(function() { dialogCancelaNFSe(os_id,empresacliente_id); }, 50);
+				return;
+			}
+			
+        	if('<?=strtoupper(trim(retira_acentuacao($dados_cadastro[0]['os_sub_status'])))?>' == 'SEM DEFEITO'
+        		|| '<?=strtoupper(trim(retira_acentuacao($dados_cadastro[0]['os_sub_status'])))?>' == 'REPROVADO' 
+        		|| '<?=strtoupper(trim(retira_acentuacao($dados_cadastro[0]['os_sub_status'])))?>' == 'ORCAMENTO REPROVADO'
+        		){
+        		if(tipo == 'dialogNFe'){
+        			alert("Sub-status '"+ '<?=strtoupper(trim(retira_acentuacao($dados_cadastro[0]['os_sub_status'])))?>' + "', permitido gerar apenas NFS!");
+        			return false;
+        		}
+
+        		var retorno = '';
+	            $.Dialog({
+	                'title'      : '<?=utf8_decode('Atenção')?>',
+	                'content'    : formSemDefeito(),
+	                'draggable'  : true,
+	                'keepOpened' : true,
+	                'position'   : {
+	                    'offsetY' : 30
+	                },
+	                'closeButton': true,
+	                'buttonsAlign': 'right',
+	                'buttons'    : {
+	                    'OK e confirmar gerar NFS'	: {
+	                        'action': function() {
+	                        	if(confirm("Salvar o valor e Gerar a NFS?")){
+		                            retorno = 'ok';
+		                            $("#taxa_deslocamento").val($("#valor_taxa").val());
+		                            $("#os_valor_total").val($("#valor_taxa").val().replace(".",","));
+		                            $("#os_valor_liquido").val($("#valor_taxa").val().replace(".",","));
+
+		                            //salva o valor de taxa
+						            $.ajax({
+						                type: "POST",
+						                url: 'os_controle_faturamento_acao.php',
+						                data: {acao:"set_valor_sem_defeito", os_id: $("#os_id").val(),clienteconfig_id:clienteconfig_id,taxa_deslocamento:$("#valor_taxa").val()},
+						                async: false,
+						                success: function(data) {
+						                }
+						            }); 
+
+						       		if(tipo == 'gerar_nfs'){
+						                if (clienteconfig_id == '51'){
+						                	setTimeout(function() { dialogNFeServ(os_id); }, 1200);
+						                }else{
+						                	window.open("os_controle_gerar_nfse_edicao.php?acao=add&cliente_id="+cliente_id+"&empresacliente_id="+empresacliente_id+"&os_id="+os_id);
+						                }
+						            }
+						            //cancelar NFS
+						            if(tipo == 'dialogCancelaNFSe'){
+										setTimeout(function() { dialogCancelaNFSe(os_id,empresacliente_id); }, 1200);
+						            	
+						            }
+						            //gerar NF de pecas
+						            if(tipo == 'dialogNFe'){
+						            	alert("Sub-status '"+ tipo + "', permitido gerar apenas NFS!");
+						            }		
+	                        	}else{
+	                        		retorno = 'nok';
+	                        	}                      
+	                        }
+	                    },
+	                    '<?=fct_get_var('global.php', 'var_botao_cancelar', $_SESSION["care-br"]["idioma_id"])?>'	: {
+	                        'action': function() {
+	                        	retorno = 'nok';
+	                        }
+	                    }
+	                }
+	            });
+	       	}else{
+	       		//NF de servico
+	       		if(tipo == 'gerar_nfs'){
+	                if (clienteconfig_id == '51'){
+	                	dialogNFeServ(os_id);
+	                }else{
+	                	window.open("os_controle_gerar_nfse_edicao.php?acao=add&cliente_id="+cliente_id+"&empresacliente_id="+empresacliente_id+"&os_id="+os_id);
+	                }
+	            }
+	            //cancelar NFS
+	            if(tipo == 'dialogCancelaNFSe'){
+	            	dialogCancelaNFSe(os_id,empresacliente_id);
+	            }
+	            //gerar NF de pecas
+				if (clienteconfig_id == 90) {
+					gerarNfLasan(os_id);
+				} else {
+					if(tipo == 'dialogNFe'){
+						dialogNFe(os_id);	
+					}
+				}
+	        }
+        }
+
+        function formSemDefeito(){   
+        	var form = '';
+            $.ajax({
+                type: "POST",
+                url: 'os_controle_faturamento_edicao.php',
+                data: {acao:"form_sem_defeito", os_id: $("#os_id").val()},
+                async: false,
+                success: function(data) {
+                    form = data;
+                }
+            }); 
+            return form;	        
+        }
+
+        function dialogNFeServ(os_id){
+
+            $.Dialog({
+                'title'      : 'NFS-e OS',
+                'content'    : "<?=utf8_decode('Gerar Nota de Serviço?')?>",
+                'draggable'  : true,
+                'keepOpened' : true,
+                'position'   : {
+                    'offsetY' : 30
+                },
+                'closeButton': true,
+                'buttonsAlign': 'right',
+                'buttons'    : {
+                    '<?=fct_get_var('global.php', 'var_botao_ok', $_SESSION["care-br"]["idioma_id"])?>' : {
+                        'action': function() {
+                            //gera xml de servico
+                            $.ajax({
+                                type: "POST",
+                                url: 'lib/nfe/acoes/NFe/MakeNFe.php',
+                                data: {os_id: os_id, itens: 'servico'},
+                                async: false,
+                                success: function(data) {
+                                    alert(data);
+                                }
+                            });
+                        }
+                    },
+                    '<?=fct_get_var('global.php', 'var_botao_cancelar', $_SESSION["care-br"]["idioma_id"])?>'   : {
+                        'action': function() {}
+                    }
+                }
+            });
+        }
+
+         function dialogCancelaNFSe(os_id,empresacliente_id){
+
+            //var empresacliente_id = $("#empresacliente_id").val();
+
+            $.Dialog({
+                    'title'      : 'Cancelar NFS-e',
+                    'content'    : getCert(empresacliente_id, true),
+                    'draggable'  : true,
+                    'keepOpened' : true,
+                    'position'   : {
+                                    'offsetY' : 30
+                    },                                                                  
+                    'closeButton': true,
+                    'buttonsAlign': 'right',
+                    'buttons'    : {
+                        '<?=fct_get_var('global.php', 'var_botao_ok', $_SESSION["care-br"]["idioma_id"])?>' : {
+                            'action': function() {                      
+                                
+                                var pass = $("#senha_nfe").val();
+                                var certs = $("#certificado").val();
+                                var xJust = $("#xjust").val();
+                                if(xJust  == ''){
+                                    alert('preencha a justificativa!');
+                                    return false;
+                                }
+                                 $.ajax({
+                                  type: "POST",
+                                  data: {acao:'cancelar_nfse',empresacliente_id:empresacliente_id,os_id:os_id,senha:pass,cert:certs,xJust:xJust},
+                                  async: false,
+                                  url: 'os_controle_gerar_nfse_acao.php',
+                                  success: function(data) {
+                                     //
+                                    //alert(data);
+                                    //loadGrid();
+                                    
+                                    if(data == '100 - Autorizado o uso da NF-e'){
+                                        css = 'color:green';
+                                    }else{
+                                        css = 'color:red';
+                                    }
+                                
+                                    //alert(resposta);      
+                                    //resposta = data;
+                                    $.Dialog.content('<div  class="row"><span style="' +css+ '" ><b>' + data + '</b></span></div> ');
+                                    $('#dialogButtons').html('');
+                                    //loadGrid();
+                                  }
+                                });
+
+                                return false;
+                                
+                            }
+                        },
+                        '<?=fct_get_var('global.php', 'var_botao_cancelar', $_SESSION["care-br"]["idioma_id"])?>'   : {
+                            'action': function() {}
+                        }
+                    }
+                });
+
+        }
+
+        function getCert(empresacliente_id, justificativa){
+            
+            $.ajax({
+              type: "POST",
+              data: {acao: 'get_nfe',empresacliente_id:empresacliente_id, justificativa: justificativa},
+              async: false,
+              url: 'nf_xml_controle_edicao.php',
+              success: function(data) {
+                campos = data;
+              }
+            });
+			//alert(campos);
+            return campos;
+			
+        }
+
+        function dialogNFe(os_id){
+			var str="|"+getNFe(os_id);
+			if (str.indexOf("Essa NF possui peças sem valores definidos.")>0 ){
+				 $.Dialog({
+	                'title'      : 'Itens OS',
+	                'content'    : getNFe(os_id),
+	                'draggable'  : true,
+	                'keepOpened' : true,
+	                'position'   : {
+	                    'offsetY' : 30
+	                },
+	                'closeButton': true,
+	                'buttonsAlign': 'right',
+	                'buttons'    : {
+	                    
+	                    '<?=fct_get_var('global.php', 'var_botao_cancelar', $_SESSION["care-br"]["idioma_id"])?>'	: {
+	                        'action': function() {}
+	                    }
+	                }
+            	});
+			}
+			else{
+            $.Dialog({
+                'title'      : 'Itens OS',
+                'content'    : getNFe(os_id),
+                'draggable'  : true,
+                'keepOpened' : true,
+                'position'   : {
+                    'offsetY' : 30
+                },
+                'closeButton': true,
+                'buttonsAlign': 'right',
+                'buttons'    : {
+                    '<?=fct_get_var('global.php', 'var_botao_ok', $_SESSION["care-br"]["idioma_id"])?>'	: {
+                        'action': function() {
+                            var lista_itens = "";
+                            var contem_item = 0;
+							
+                            $('.ckbItem').each(function(){
+                                contem_item = contem_item + 1;
+                                if($(this).is(':checked')){
+                                    if (lista_itens != '')	lista_itens += ' , ';
+                                    lista_itens += $(this).val();
+                                }
+                            });
+
+                            if (lista_itens == '' && contem_item > 0){
+                                alert('<?=fct_get_var('global.php', 'var_selecione_1_item', $_SESSION["care-br"]["idioma_id"])?>!');
+                                return false;
+                            }else if(contem_item == 0){
+                                return;
+                            }
+							
+							//mostra aviso nota
+                            var res = gerarXML(os_id, lista_itens);
+								$("#aviso").show();
+							
+								if (res.match(/Nota Fiscal de Num.: (.*?) gerada com sucesso!/))
+								{
+									$("#autoriza_nfe").show();
+									$("#danfe_view").show();
+								}
+								$("#aviso_nfe").html(res);
+								window.location = "#aviso";
+                        }
+                    },
+                    '<?=fct_get_var('global.php', 'var_botao_cancelar', $_SESSION["care-br"]["idioma_id"])?>'	: {
+                        'action': function() {}
+                    }
+                }
+            });
+            }
+		  // alert(dados);
+		
+		//return 'ok';
+        }
+
+        function getNFe(os_id){
+            $.ajax({
+                type: "POST",
+                url: 'os_controle_gerar_nfse_acao.php',
+                data: {acao: 'dialogNFe', os_id: os_id},
+                async: false,
+                success: function(data) {
+                    dialog_NFe = data;
+                }
+            });
+            return dialog_NFe;
+        }
+
+        function gerarXML(os_id, itens){
+			var retorno = "";
+			
+            $.ajax({
+                type: "POST",
+                url: 'os_controle_gerar_nfse_acao.php',
+                data: {acao: 'valida_xml', os_id: os_id, itens: itens},
+                async: false,
+                success: function(data) {
+                    valida = data;		
+					
+                }
+            });
+
+            if(valida != 'NV'){ // NV = Nao Valida, para clientes que nao emitem NFE
+                if(valida != 'OK'){
+					alert(valida);
+                    return retorno;
+                }
+				
+            } else {
+                alert('Cliente sem permissão para gerar NF-e!');
+                return retorno;
+            }
+
+            $.ajax({
+                type: "POST",
+                url: 'lib/nfe/acoes/NFe/MakeNFe.php',
+                data: {os_id: os_id, itens: itens},
+                async: false,
+                success: function(data) {
+					retorno = data;										
+                }
+            });
+            
+			return retorno;
+        }
 		
 		function updtPecaLista(osprodutopeca_id,produto_id_peca){
 			var osprodutopeca_qtde = $("#osprodutopeca_qtde_" + osprodutopeca_id).val();
@@ -987,12 +1264,11 @@ if ($acao == "add"){
 			var produto_id_estoque = $("#produto_id_estoque_" + osprodutopeca_id).val();
 			var estoque_qtde       = $("#estoque_qtde_" + produto_id_estoque).val();
 
-            // B2X Moema / SES grava os valores da peça no Análise
+            // B2X Moema grava os valores da peça no Análise
             var osprodutopeca_valor_venda = '';
             var osprodutopeca_desconto = '';
             var osprodutopeca_valor_mao_obra = '';
-            var b2x_csp_os="<?=B2X_CSP_OS?>";
-            if (clienteconfig_id == 101 || clienteconfig_id == 110 || clienteconfig_id == 112 || clienteconfig_id == 123 || clienteconfig_id == 124 || clienteconfig_id == 131 || (b2x_csp_os.indexOf("|"+clienteconfig_id+"|")>0) ) {
+            if (clienteconfig_id == 123) {
                 osprodutopeca_valor_venda = $("#osprodutopeca_valor_venda_" + osprodutopeca_id).val();
                 osprodutopeca_desconto = $("#osprodutopeca_desconto_" + osprodutopeca_id).val();
                 osprodutopeca_valor_mao_obra = $("#osprodutopeca_valor_mao_obra_" + osprodutopeca_id).val();
@@ -1118,7 +1394,7 @@ if ($acao == "add"){
 			var os_id = $("#os_id").val();
 			$.ajax({
 			  type: "POST",
-			  url: 'os_controle_aguarda_analise_edicao.php',
+			  url: 'os_controle_reparo_edicao.php',
 			  data: {acao: 'get_servico_lista', cliente_id: cliente_id, clienteconfig_id: clienteconfig_id, os_id: os_id},
 			  async: false,
 			  success: function(data) {
@@ -1153,11 +1429,11 @@ if ($acao == "add"){
 		
 		function updtServicoLista(osservico_id){
 			var osservico_valor = $("#osservico_valor_" + osservico_id).val();
-			var osservico_desconto = $("#osservico_desconto_" + osservico_id).val();
+			var osservico_observacao = $("#osservico_observacao_" + osservico_id).val();
 			$.ajax({
 			  type: "POST",
 			  url: 'os_controle_aguarda_analise_acao.php',
-			  data: {acao: 'updt_servico_lista', osservico_id: osservico_id, osservico_valor: osservico_valor, osservico_desconto: osservico_desconto},
+			  data: {acao: 'updt_servico_lista', osservico_id: osservico_id, osservico_valor: osservico_valor, osservico_observacao: osservico_observacao},
 			  async: false,
 			  success: function(data) {
 				getServicoLista();
@@ -1166,7 +1442,7 @@ if ($acao == "add"){
 		}
 		
 		function excluiServicoLista(osservico_id){
-			if (confirm("<?=fct_get_var('global.php', 'var_confirma_exclusao', $_SESSION["care-br"]["idioma_id"])?>")){
+			//if (confirm("<?=fct_get_var('global.php', 'var_confirma_exclusao', $_SESSION["care-br"]["idioma_id"])?>")){
 				$.ajax({
 				  type: "POST",
 				  url: 'os_controle_aguarda_analise_acao.php',
@@ -1176,8 +1452,9 @@ if ($acao == "add"){
 					getServicoLista();
 				  }
 				});
-			}
+			//}
 		}
+		
 		
 		function setaMotivoExclusivo(tipo_id, motivo_exclusivo){
 			var motivo_exclusivo_contrario;
@@ -1232,21 +1509,6 @@ if ($acao == "add"){
 				getServicoLista();
 			  }
 			});
-
-			if ($("#os_cobertura").val() == 'HHP - LP' && ($("#clienteconfig_id").val() == 101 || $("#clienteconfig_id").val() == 110 || $("#clienteconfig_id").val() == 112 || $("#clienteconfig_id").val() == 124)) {
-				var ok = true;
-				$(".osprodutopeca_id").each(function(){
-					osprodutopeca_id = $(this).val();
-					var osprodutopeca_qtde = $("#osprodutopeca_qtde_" + osprodutopeca_id).val();
-					var estoque_qtde = $("input[name='estoque_qtde_" + osprodutopeca_id + "']").val();
-					if (osprodutopeca_qtde > estoque_qtde) {
-						ok = false;
-					}
-				});
-				if (!ok) {
-					$("#status_id_novo").html('<option title="<?=utf8_decode('Aguardando Peça')?>" alt="<?=utf8_decode('Aguardando Peça')?>" value="14"><?=utf8_decode('Ag. Peça')?></option>');
-				}
-			}
 		}
 
 		function dialogComentariogeral(){
@@ -1289,7 +1551,7 @@ if ($acao == "add"){
 		}	
 
 		function dialogComentario(){
-			// obrigatório selecionar ao menos 1 item da lista
+			// obrigat�rio selecionar ao menos 1 item da lista
 			
 			//$.Dialog().close();
 			//$.Dialog.close();
@@ -1368,7 +1630,7 @@ if ($acao == "add"){
 					
 				break;
 			}
-		}
+		}						
 	</script>
 	
 	<div class="page secondary">
@@ -1388,10 +1650,10 @@ if ($acao == "add"){
 						<input type="hidden" name="cliente_id" id="cliente_id" value="<?=$cliente_id?>" />
 						<input type="hidden" name="clienteconfig_id" id="clienteconfig_id" value="<?=$clienteconfig_id?>" />
 						<input type="hidden" name="status_id" id="status_id" value="<?=$status_id?>" />
-						<input type="hidden" name="substatus_id" id="substatus_id" value="<?=$substatus_id?>" />
 						<input type="hidden" name="os_id" id="os_id" value="<?=$os_id?>" />
 						<input type="hidden" name="produto_id" id="produto_id" value="<?=$dados_cadastro[0]["produto_id"]?>" />
 						<input type="hidden" name="numero_id" id="numero_id" value="<?=$numero_id?>" />
+
 						<fieldset>
                         <legend style="color:black; font-weight: bold">Dados Cliente</legend>
 						<div class="row">
@@ -1563,7 +1825,7 @@ if ($acao == "add"){
 							<div class="span3 campos-form">
 								<label>
                                     <?
-                                        if ($clienteconfig_id == 101 || $clienteconfig_id == 110 || $clienteconfig_id == 112 || $clienteconfig_id == 123 || $clienteconfig_id == 124 || $clienteconfig_id == 131 || $clienteconfig_id == 136) {
+                                        if ($clienteconfig_id == 123) {
                                             echo "Service GSPN";
                                         } else {
                                             fct_get_var('global.php', 'var_os_chamado', $_SESSION["care-br"]["idioma_id"]);
@@ -1588,18 +1850,6 @@ if ($acao == "add"){
 								</label>
 								<div class="input-control text">
 									<input type="text" id="lista_os" name="lista_os" value="<?=$dados_cadastro[0]["empresa_razao_social_fabricante"]?>" disabled />
-								</div>
-							</div>
-							<div class="span4 campos-form">
-								<label>
-									Modalidade Atendimento
-									<i class="icon-help"></i>
-									<div class="tooltip">
-										Modalidade Atendimento
-									</div>
-								</label>
-								<div class="input-control text">
-									<input type="text" id="lista_os" name="lista_os" value="<?=$dados_cadastro[0]["tipo_isento_taxa"]?>" disabled />
 								</div>
 							</div>
 							<div class="span6 campos-form">
@@ -1921,13 +2171,55 @@ if ($acao == "add"){
 							<?
 						}
 						?>
-						
 						<!-- carregar lista de peças requeridas aqui -->
 						<div id="peca_lista"></div>
 
 						<!-- carregar lista de peças requeridas aqui -->
 						<div id="servico_lista"></div>
 						<script>getServicoLista();</script>
+
+						<?
+							$sql = "SELECT DISTINCT a.usuario_id, a.usuario_nome
+										FROM tb_cad_usuario a
+										WHERE a.perfil_id IN (SELECT perfil_id
+																FROM tb_prod_os_planner_tecnico
+																WHERE clienteconfig_id = '$clienteconfig_id')
+										ORDER BY  a.usuario_nome";
+							if($clienteconfig_id=='20' && $os_tipo=='externo' && $os_cobertura='PITZI'){
+								$sql = "SELECT DISTINCT a.usuario_id, a.usuario_nome
+								FROM tb_cad_usuario a
+								WHERE a.perfil_id IN (SELECT perfil_id
+														FROM tb_prod_os_planner_tecnico
+														WHERE clienteconfig_id = '$clienteconfig_id' AND perfil_id='74')
+								ORDER BY  a.usuario_nome";
+							}
+							if (strpos(JMV,"|".$clienteconfig_id."|")>0){
+
+						?>					
+						
+						<div class="span6 campos-form">
+							<div class="input-control select">
+								<label class="tecnico_reparo" >
+									Tecnico Reparo Externo
+									<i class="icon-help" title="" alt="tecnico"></i>
+									<div class="tooltip">
+										Tecnico Reparo Externo
+									</div>
+								</label>
+								<select class="tecnico_reparo" id="tecnico_reparo" name="tecnico_reparo">
+									<option value=""></option>
+									<?
+									$result_tecnico = $conn->sql($sql);
+									while($tmp_filtro1 = mysqli_fetch_array($result_tecnico)){
+										?>
+										<option value="<?=$tmp_filtro1["usuario_id"]?>" title="<?=$tmp_filtro1["usuario_nome"]?>" <? if ($tmp_filtro1["usuario_id"] == $dados_cadastro[0]['usuario_tecnico_reparo']) echo "selected"; ?> alt="<?=$tmp_filtro1["usuario_nome"]?>"><?=$tmp_filtro1["usuario_id"].' - '.$tmp_filtro1["usuario_nome"]?></option>
+										<?
+									}
+									?>
+								</select>
+							</div>
+						</div>
+						<?}?>
 												
 						<div class="row">
 							<?
@@ -2279,7 +2571,7 @@ if ($acao == "add"){
 									
                                     <?
                                         $tamanho = '5';
-                                        if ($clienteconfig_id == 101 || $clienteconfig_id == 110 || $clienteconfig_id == 112 || $clienteconfig_id == 123 || $clienteconfig_id == 124 || $clienteconfig_id == 131) {
+                                        if ($clienteconfig_id == 123) {
                                             $tamanho = '6';
                                         }
                                     ?>
@@ -2303,82 +2595,7 @@ if ($acao == "add"){
 							if(trim($dados_cadastro[0]['os_produto_retorno_cliente']) == 'Retorno Cliente' && $dados_cadastro[0]["os_produto_serial"] != ''){
 								verifica_reincidencia($os_id, $clienteconfig_id, $dados_cadastro[0]["os_produto_serial"]);
 							}
-							?>	
-							</div>
-							Recebimentos Gerados:
-							<?
-							$sql = "SELECT clienteconfig_recebimento_automatico, fluxo_emite_recido_venda, zerar_valores_orcamento_reprovado, empresacliente_id
-							FROM tb_prod_care_cliente_config 
-							WHERE clienteconfig_id = $clienteconfig_id ";
-							$result_recebimento_automativo = $conn->sql($sql);
-							$tmp_recebimento_automativo = mysqli_fetch_array($result_recebimento_automativo);
-
-							$recibo = "<table><thead><tr><td>Parcela</td><td>Descricao</td><td>Valor</td><td>Vencimento</td><td>Forma de Pagamento</td><td><b>Recebido</b></td></tr></thead><tbody>";
-							$sql_buscar_recebimentos = "SELECT * FROM tb_cad_recebimento WHERE os_id='".$os_id."' AND recebimento_situacao != 'cancelado' AND empresa_id = '".$tmp_recebimento_automativo['empresacliente_id']."' AND empresa_id > 0 ORDER BY recebimento_id DESC";
-
-							
-						    $res_buscar_recebimentos = $conn->sql($sql_buscar_recebimentos);
-						    $num_buscar_recebimentos = mysqli_num_rows($res_buscar_recebimentos);
-						    $total_recibo = 0;
-
-						    for($x=1; $x<=$num_buscar_recebimentos; $x++){
-						        $obj_buscar_recebimentos = mysqli_fetch_object($res_buscar_recebimentos);
-						        
-						        $total_recibo += $obj_buscar_recebimentos->recebimento_valor;
-						        
-						        if($obj_buscar_recebimentos->recebimento_valor>0){
-						          $recibo .=  '<tr><td>Parcela: '.$x.'</td><td>Parcela: '.$obj_buscar_recebimentos->recebimento_descricao.'</td><td>'. 'R$'.number_format($obj_buscar_recebimentos->recebimento_valor, 2, ",",".").'</td><td>' . $obj_buscar_recebimentos->recebimento_data_vencimento . '</td><td>'.$obj_buscar_recebimentos->recebimento_forma_pagamento.'</td><td>'.$obj_buscar_recebimentos->recebimento_valor_pago.'</td></tr>';
-						        }
-						    }
-						    if($num_buscar_recebimentos == 0){
-						    	$recibo.= "<tr><td colspan='5'><center>Nenhum Registro Encontrado</center></td></tr>";
-						    }
-						    
-							$recibo .= "</tbody></table>";
-
-							echo $recibo;
-							
-
-
-
-						?>
-						Estornos:
-                        <?
-                         	
-                                    $recibo = "<table><thead><tr><td>Parcela</td><td>Descricao</td><td>Valor</td><td>Vencimento</td><td>Forma de Pagamento</td><td><b>Pago</b></td></tr></thead><tbody>";
-    
-                                    $sql_buscar_pagamentos = "SELECT * FROM tb_cad_pagamento WHERE os_id='".$os_id."' AND pagamento_situacao != 'cancelado' AND empresa_id = '".$tmp_recebimento_automativo['empresacliente_id']."' AND empresa_id > 0 ORDER BY pagamento_id DESC";
-                                    $res_buscar_pagamentos = $conn->sql($sql_buscar_pagamentos);
-                                    $num_buscar_pagamentos = mysqli_num_rows($res_buscar_pagamentos);
-    
-                                    for($x=1; $x<=$num_buscar_pagamentos; $x++){
-                                        $obj_buscar_pagamentos = mysqli_fetch_object($res_buscar_pagamentos);
-                                        if($obj_buscar_pagamentos->pagamento_valor_pago > 0){
-                                            $total_recibo -= $obj_buscar_pagamentos->pagamento_valor_pago;
-                                        }else{
-                                            // caso recibo seja credito considerar o valor 
-                                            if($obj_buscar_pagamentos->pagamento_forma_pagamento == 'cartao' || $obj_buscar_pagamentos->pagamento_forma_pagamento == 'cheque'){
-                                                $total_recibo -= $obj_buscar_pagamentos->pagamento_valor;
-                                            }
-                                        }
-                                        
-                                        
-                                        if($obj_buscar_pagamentos->pagamento_valor>0){
-                                        $recibo .=  '<tr><td>Parcela: '.$x.'</td><td>Parcela: '.$obj_buscar_pagamentos->pagamento_descricao.'</td><td>'. 'R$'.number_format($obj_buscar_pagamentos->pagamento_valor, 2, ",",".").'</td><td>' . $obj_buscar_pagamentos->pagamento_data_vencimento . '</td><td>'.$obj_buscar_pagamentos->pagamento_forma_pagamento.'</td><td>'.$obj_buscar_pagamentos->pagamento_valor_pago.'</td></tr>';
-                                        }
-                                    }
-                                    if($num_buscar_recebimentos == 0){
-                                        $recibo.= "<tr><td colspan='5'><center>Nenhum Registro Encontrado</center></td></tr>";
-                                    }
-                                    
-                                    $recibo .= "</tbody></table>";
-                                    echo $recibo;
-                                    
-                                
-
-                                echo "<input type='hidden' id='valor_recebido' value='$total_recibo'/>";
-                                echo 'Valor Recebido/Entrada: <b>'.$total_recibo.'</b></br>';
-                             ?>
+							?>		
 
 							<div class="span6 campos-form">
 								<label>
@@ -2449,6 +2666,34 @@ if ($acao == "add"){
 
 								<a href="javascript: void(0);" onClick="dialogComentariogeral();"><i class="icon-comments-5"></i><?=utf8_decode("Histórico de Comentários")?></a>								
 								<a id='agenda_tecnico' href="javascript: void(0);" onClick="AgendaTecnico(<?php echo $os_id ?>);"><i class="icon-calendar"></i><?=utf8_decode("Agendar Retirada Produto")?></a>
+
+								
+                                    <?		
+                                        $empresacliente_id = $dados_cadastro[0]["empresacliente_id"];
+                                        //$rotina_link_nf = get_rotina_invisivel(VAR_MENU_CABECALHO, $_SESSION["care-br"]["submodulo_pagina"]);
+                                        //$acesso_liberado = strpos($rotina_link_nf, "gerar_os_nfs");
+                                        if ($clienteconfig_id==178){
+
+                                        	$sql_linha = "SELECT * FROM tb_prod_care_cliente_config WHERE clienteconfig_id = '$clienteconfig_id'  ";
+											$result_filtro = $conn->sql($sql_linha);
+											while($tmp_filtro = mysqli_fetch_array($result_filtro)){
+												$empresacliente_id=$tmp_filtro["empresacliente_id"];
+											}
+                                            
+                                                if (empty($dados_cadastro[0]["xml_serv"])){?>    
+                                                    <a href="javascript: void(0);" onClick="gerarNf('gerar_nfs',<?=$dados_cadastro[0]["os_id"]?>,<?=$empresacliente_id?>);" title="Gerar NFS-e" alt="Gerar NFS-e"><i class="icon-new"></i>NFS</a><?											
+                                                }else{
+                                                    $acesso_liberado = strpos($rotina_link_nf, "cancelar_os_nfs");
+                                                    if ($acesso_liberado){?>
+                                                        <a id='cancela_nfse' href="javascript: void(0);" onClick="gerarNf('dialogCancelaNFSe','<?=$dados_cadastro[0]['os_id']?>','<?=$empresacliente_id?>');"><i class="icon-cancel"></i>Cancel-NF</a> 
+                                                        <!-- <a id='cancela_nfse' href="javascript: void(0);" onClick="dialogCancelaNFSe('<?=$dados_cadastro[0]['1os_id']?>','<?=$empresacliente_id?>');"><i class="icon-cancel"></i>Cancel-NF</a>  -->
+                                                    <?}
+                                                
+                                            }										
+                                        }								
+                                        										
+                                    ?>
+                               			
 							</div>
 						</div>
 					</form>
