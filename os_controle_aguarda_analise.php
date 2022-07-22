@@ -88,148 +88,148 @@ if ($acao == "add"){
 	  </style>
 	  <script>
 
-	  (function( $ ) {
+		(function( $ ) {
 
-	    $.widget( "custom.combobox", {
-	      _create: function() {
-	        this.wrapper = $( "<span>" )
-	          .addClass( "custom-combobox" )
-	          .insertAfter( this.element );
-	 
-	        this.element.hide();
-	        this._createAutocomplete();
-	        this._createShowAllButton();
-	      },
-	 
-	      _createAutocomplete: function() {
-	        var selected = this.element.children( ":selected" ),
-	          value = selected.val() ? selected.text() : "";
-	 
-	        this.input = $( "<input>" )
-	          .appendTo( this.wrapper )
-	          .val( value )
-	          .attr( "title", "" )
-	          .addClass( "custom-combobox-input ui-widget ui-widget-content ui-state-default ui-corner-left" )
-	          .autocomplete({
-	            delay: 0,
-	            minLength: 0,
-	            source: $.proxy( this, "_source" )
-	          })
-	          .tooltip({
-	            tooltipClass: "ui-state-highlight"
-	          });
-	 
-	        this._on( this.input, {
-	          autocompleteselect: function( event, ui ) {
-	            ui.item.option.selected = true;
-	            this._trigger( "select", event, {
-	              item: ui.item.option
-	            });
-	          },
-	 
-	          autocompletechange: "_removeIfInvalid"
-	        });
-	      },
-	 
-	      _createShowAllButton: function() {
-	        var input = this.input,
-	          wasOpen = false;
-	 
-	        $( "<a>" )
-	          .attr( "tabIndex", -1 )
-	          .attr( "title", "Exibir itens" )
-	          .tooltip()
-	          .appendTo( this.wrapper )
-	          .button({
-	            icons: {
-	              primary: "ui-icon-triangle-1-s"
-	            },
-	            text: false
-	          })
-	          .removeClass( "ui-corner-all" )
-	          .addClass( "custom-combobox-toggle ui-corner-right" )
-	          .mousedown(function() {
-	            wasOpen = input.autocomplete( "widget" ).is( ":visible" );
-	          })
-	          .click(function() {
-	            input.focus();
-	 
-	            // Close if already visible
-	            if ( wasOpen ) {
-	              return;
-	            }
-	 
-	            // Pass empty string as value to search for, displaying all results
-	            input.autocomplete( "search", "" );
-	          });
-	      },
-	 
-	      _source: function( request, response ) {
-	        var matcher = new RegExp( $.ui.autocomplete.escapeRegex(request.term), "i" );
-	        response( this.element.children( "option" ).map(function() {
-	          var text = $( this ).text();
-	          if ( this.value && ( !request.term || matcher.test(text) ) )
-	            return {
-	              label: text,
-	              value: text,
-	              option: this
-	            };
-	        }) );
-	      },
-	 
-	      _removeIfInvalid: function( event, ui ) {
-	 
-	        // Selected an item, nothing to do
-	        if ( ui.item ) {
-	          return;
-	        }
-	 
-	        // Search for a match (case-insensitive)
-	        var value = this.input.val(),
-	          valueLowerCase = value.toLowerCase(),
-	          valid = false;
-	        this.element.children( "option" ).each(function() {
-	          if ( $( this ).text().toLowerCase() === valueLowerCase ) {
-	            this.selected = valid = true;
-	            return false;
-	          }
-	        });
-	 
-	        // Found a match, nothing to do
-	        if ( valid ) {
-	          return;
-	        }
-	 
-	        // Remove invalid value
-	        this.input
-	          .val( "" )
-	          .attr( "title", value + " invalido! Escolha um item da lista" )
-	          .tooltip( "open" );
-	        this.element.val( "" );
-	        this._delay(function() {
-	          this.input.tooltip( "close" ).attr( "title", "" );
-	        }, 2500 );
-	        this.input.autocomplete( "instance" ).term = "";
-	      },
-	 
-	      _destroy: function() {
-	        this.wrapper.remove();
-	        this.element.show();
-	      }
-	    });
-	  })( jQuery );
+			$.widget( "custom.combobox", {
+			_create: function() {
+				this.wrapper = $( "<span>" )
+				.addClass( "custom-combobox" )
+				.insertAfter( this.element );
+		
+				this.element.hide();
+				this._createAutocomplete();
+				this._createShowAllButton();
+			},
+		
+			_createAutocomplete: function() {
+				var selected = this.element.children( ":selected" ),
+				value = selected.val() ? selected.text() : "";
+		
+				this.input = $( "<input>" )
+				.appendTo( this.wrapper )
+				.val( value )
+				.attr( "title", "" )
+				.addClass( "custom-combobox-input ui-widget ui-widget-content ui-state-default ui-corner-left" )
+				.autocomplete({
+					delay: 0,
+					minLength: 0,
+					source: $.proxy( this, "_source" )
+				})
+				.tooltip({
+					tooltipClass: "ui-state-highlight"
+				});
+		
+				this._on( this.input, {
+				autocompleteselect: function( event, ui ) {
+					ui.item.option.selected = true;
+					this._trigger( "select", event, {
+					item: ui.item.option
+					});
+				},
+		
+				autocompletechange: "_removeIfInvalid"
+				});
+			},
+		
+			_createShowAllButton: function() {
+				var input = this.input,
+				wasOpen = false;
+		
+				$( "<a>" )
+				.attr( "tabIndex", -1 )
+				.attr( "title", "Exibir itens" )
+				.tooltip()
+				.appendTo( this.wrapper )
+				.button({
+					icons: {
+					primary: "ui-icon-triangle-1-s"
+					},
+					text: false
+				})
+				.removeClass( "ui-corner-all" )
+				.addClass( "custom-combobox-toggle ui-corner-right" )
+				.mousedown(function() {
+					wasOpen = input.autocomplete( "widget" ).is( ":visible" );
+				})
+				.click(function() {
+					input.focus();
+		
+					// Close if already visible
+					if ( wasOpen ) {
+					return;
+					}
+		
+					// Pass empty string as value to search for, displaying all results
+					input.autocomplete( "search", "" );
+				});
+			},
+		
+			_source: function( request, response ) {
+				var matcher = new RegExp( $.ui.autocomplete.escapeRegex(request.term), "i" );
+				response( this.element.children( "option" ).map(function() {
+				var text = $( this ).text();
+				if ( this.value && ( !request.term || matcher.test(text) ) )
+					return {
+					label: text,
+					value: text,
+					option: this
+					};
+				}) );
+			},
+		
+			_removeIfInvalid: function( event, ui ) {
+		
+				// Selected an item, nothing to do
+				if ( ui.item ) {
+				return;
+				}
+		
+				// Search for a match (case-insensitive)
+				var value = this.input.val(),
+				valueLowerCase = value.toLowerCase(),
+				valid = false;
+				this.element.children( "option" ).each(function() {
+				if ( $( this ).text().toLowerCase() === valueLowerCase ) {
+					this.selected = valid = true;
+					return false;
+				}
+				});
+		
+				// Found a match, nothing to do
+				if ( valid ) {
+				return;
+				}
+		
+				// Remove invalid value
+				this.input
+				.val( "" )
+				.attr( "title", value + " invalido! Escolha um item da lista" )
+				.tooltip( "open" );
+				this.element.val( "" );
+				this._delay(function() {
+				this.input.tooltip( "close" ).attr( "title", "" );
+				}, 2500 );
+				this.input.autocomplete( "instance" ).term = "";
+			},
+		
+			_destroy: function() {
+				this.wrapper.remove();
+				this.element.show();
+			}
+			});
+		})( jQuery );
 
-	  function localArmazenamento(local, numero_id){
-		$.ajax({
-		  type: "POST",
-		  url: 'os_controle_edicao.php',
-		  data: {acao: 'get_campos_local', local_id: local, numero_id: numero_id},
-		  async: false,
-		  success: function(resposta) {
-			$(".numero_local_os").html(resposta);
-		  }
-		});
-	}
+		function localArmazenamento(local, numero_id){
+			$.ajax({
+			type: "POST",
+			url: 'os_controle_edicao.php',
+			data: {acao: 'get_campos_local', local_id: local, numero_id: numero_id},
+			async: false,
+			success: function(resposta) {
+				$(".numero_local_os").html(resposta);
+			}
+			});
+		}
 
 	  </script>
 
@@ -281,27 +281,22 @@ if ($acao == "add"){
 					$("#agenda_tecnico").show();
 				}
 			});
-
-
-			var tipo_servico = $("#os_tipo_servico").val();
-
-			if(tipo_servico == 18){
-				//getStatusNovo();
-			}
-			$(".os_solicitante_servico").change(function(){
-               
+            $(".os_sub_status").change(function(){
+                var b2x_csp_os="<?=B2X_CSP_OS?>";
 				$.ajax({
 				  type: "POST",
 				  url: 'os_controle_aguarda_analise_edicao.php',
 				  success: function() {
 				  var verificacliente="<?=$clienteconfig_id?>";	
-				  if (verificacliente==123){
-					if ($(".os_solicitante_servico").val()=="<?=utf8_decode('X01-Falha não encontrada')?>"){ 
-					   $("#status_id_novo").append('<option title="Teste" alt="Teste" value="18">Teste</option>');
-					 
+				  if (verificacliente == 123 || verificacliente == 131 || (b2x_csp_os.indexOf("|"+verificacliente+"|")>0) ){
+					  if ($(".os_sub_status").val()=="Orçamento Reprovado"){	
+					   $("#status_id_novo").append('<option title="Aguardando Peça" alt="Aguardando Peça" value="14">Peça</option>');
+					   $("#status_id_novo").append('<option title="Produto aguardando emissõo da NF Serviços" alt="Produto aguardando emissão da NF Serviços" value="24">Ag. Faturamento</option>');
+
 					  }
 					  else{
-					  	$("#status_id_novo option[value='18']").remove();
+					  	$("#status_id_novo option[value='14']").remove();
+	                    $("#status_id_novo option[value='24']").remove();
 					  }
 				   }  
 				}
@@ -311,6 +306,13 @@ if ($acao == "add"){
 				
                
 			});
+
+
+			var tipo_servico = $("#os_tipo_servico").val();
+
+			if(tipo_servico == 18){
+				//getStatusNovo();
+			}
 
 
 			$("#os_tipo_servico").change(function(){
@@ -334,10 +336,7 @@ if ($acao == "add"){
 			});			
 
 
-			//Comentado, pois a mesma consulta � feita na fun��o getPecasGSPN() tamb�m no docuemnt ready
-			//getPecaLista(); 
-
-			getServicoLista();
+			getPecaLista();getServicoLista();
 			
 			// setar status de acordo com checklist
 			getStatusNovo();
@@ -395,7 +394,7 @@ if ($acao == "add"){
 							}
 						}
 
-						// Verifica os pre�os
+						// Verifica os preços
 						var ok = 'ok';
 						$(".osprodutopeca_id").each(function(){
 							osprodutopeca_id = $(this).val();
@@ -421,11 +420,11 @@ if ($acao == "add"){
 							// 	osprodutopeca_valor_mao_obra = '0.00';
 							if (osprodutopeca_cobrar == 'S') {
 								if (valor_venda != osprodutopeca_valor_venda) {
-									alert('Valor de venda n�o foi salvo!');
+									alert('Valor de venda não foi salvo!');
 									ok = 'nok';
 									return false;
 								} else if (valor_desconto != osprodutopeca_desconto) {
-									alert('Valor de desconto n�o foi salvo!');
+									alert('Valor de desconto não foi salvo!');
 									ok = 'nok';
 									return false;
 								// } else if (valor_maodeobra != osprodutopeca_valor_mao_obra) {
@@ -433,7 +432,7 @@ if ($acao == "add"){
 								// 	ok = 'nok';
 								// 	return false;
 								} else if (peca_cobrar != osprodutopeca_cobrar) {
-									alert('Campo "Cobrar" n�o foi salvo!');
+									alert('Campo "Cobrar" não foi salvo!');
 									ok = 'nok';
 									return false;
 								}
@@ -443,28 +442,11 @@ if ($acao == "add"){
 						if (ok == 'nok') {
 							return false;
 						}
-				
+
 						$("#numero_id").val($(".numero_local_os").val());
 				
 						// confirmar operação e submeter formulário via ajax
 						if (confirm("<?=fct_get_var('global.php', 'var_msg_os_analise_tecnica_confirma', $_SESSION["care-br"]["idioma_id"])?>")){												
-							// N�o salvar com a quantidade zerada
-							var osprodutopeca_id;
-							var ok = 'ok';
-							$(".osprodutopeca_id").each(function(){
-								osprodutopeca_id = $(this).val();
-								var osprodutopeca_qtde = $("#osprodutopeca_qtde_" + osprodutopeca_id).val();
-								if (osprodutopeca_qtde == 0) {
-									alert("Existe pe�a com a quantidade zerada!");
-									ok = 'nok';
-									return false;
-								}
-							});
-
-							if (ok == 'nok') {
-								return false;
-							}
-
 							var cliente_id = $("#cliente_id").val();
 							var clienteconfig_id = $("#clienteconfig_id").val();
 							var status_id = $("#status_id").val();						
@@ -587,8 +569,9 @@ if ($acao == "add"){
 					  		msg = msg + osprodutopeca_id + ':' + qtd_solicitar  + ';' ;
 
 						}
+						var b2x_csp_os="<?=B2X_CSP_OS?>";
 
-                        if ($("#clienteconfig_id").val() == 123 && (produto_id_estoque == 314501 || produto_id_estoque == 314502 || produto_id_estoque == 314503)) {
+                        if (($("#clienteconfig_id").val() == 123 || $('#clienteconfig_id').val() == 131 || (b2x_csp_os.indexOf("|"+$('#clienteconfig_id').val()+"|")>0) ) && (produto_id_estoque == 314501 || produto_id_estoque == 314502 || produto_id_estoque == 314503)) {
                             msg = '';
                         }
 													
@@ -828,11 +811,10 @@ if ($acao == "add"){
 		}
 
 		
-		function excluiCadastro(osprodutopeca_id, produto_id_peca){
-			if (confirm("<?=fct_get_var('global.php', 'var_confirma_exclusao', $_SESSION["care-br"]["idioma_id"])?>")){
-				
-	            var os_id = $("#os_id").val();
-	            var clienteconfig_id = $("#clienteconfig_id").val();
+		function excluiCadastro(osprodutopeca_id, produto_id_peca, todos){
+			if (todos == 'S') {
+				var os_id = $("#os_id").val();
+				var clienteconfig_id = $("#clienteconfig_id").val();
 
 				os_id = $("#os_id").val();
 				qtde_utilizada_baixada = $("#estoque_status_62_" + osprodutopeca_id).val();
@@ -843,12 +825,12 @@ if ($acao == "add"){
 				estoque_id = $("#estoque_id_" + osprodutopeca_id).val();
 
 				$.ajax({
-				  	type: "POST",
-				  	url: 'os_controle_aguarda_analise_acao.php',
-				  	data: {acao: 'dlt', estoque_id:estoque_id, qtde_defeito_baixada: qtde_defeito_baixada, qtde_utilizada_baixada:qtde_utilizada_baixada, qtde_laboratorio:qtde_laboratorio,osprodutopeca_id: osprodutopeca_id, os_id: os_id, produto_id_peca: produto_id_peca, clienteconfig_id: clienteconfig_id},
-				  	async: false,
-				  	success: function(data) {
-				  		//alert(data);
+					type: "POST",
+					url: 'os_controle_aguarda_analise_acao.php',
+					data: {acao: 'dlt', estoque_id:estoque_id, qtde_defeito_baixada: qtde_defeito_baixada, qtde_utilizada_baixada:qtde_utilizada_baixada, qtde_laboratorio:qtde_laboratorio,osprodutopeca_id: osprodutopeca_id, os_id: os_id, produto_id_peca: produto_id_peca, clienteconfig_id: clienteconfig_id},
+					async: false,
+					success: function(data) {
+						//alert(data);
 						getPecaLista();
 						if (clienteconfig_id == 20 || clienteconfig_id == 82) {
 							var os_cobertura = $("#os_cobertura").val();
@@ -862,42 +844,70 @@ if ($acao == "add"){
 								}
 							}
 						}
-				  	}
+					}
 				});
 					
 				if (qtde_utilizada_baixada > 0 || qtde_laboratorio > 0){
 
 					alert('Pecas utilizada(s) e no laboratorio foram movidas para NAO UTILIZADA(S) para dar entrada no Estoque!');
 				}
+			} else {
+				if (confirm("<?=fct_get_var('global.php', 'var_confirma_exclusao', $_SESSION["care-br"]["idioma_id"])?>")){
+					
+					var os_id = $("#os_id").val();
+					var clienteconfig_id = $("#clienteconfig_id").val();
+
+					os_id = $("#os_id").val();
+					qtde_utilizada_baixada = $("#estoque_status_62_" + osprodutopeca_id).val();
+					qtde_nao_utilizada_baixada = $("#estoque_status_71_" + osprodutopeca_id).val();
+					qtde_defeito_baixada = $("#estoque_status_70_" + osprodutopeca_id).val();
+					qtde_laboratorio = $("#estoque_status_68_" + osprodutopeca_id).val();
+					qtde = $("#osprodutopeca_qtde_" + osprodutopeca_id).val();
+					estoque_id = $("#estoque_id_" + osprodutopeca_id).val();
+
+					$.ajax({
+						type: "POST",
+						url: 'os_controle_aguarda_analise_acao.php',
+						data: {acao: 'dlt', estoque_id:estoque_id, qtde_defeito_baixada: qtde_defeito_baixada, qtde_utilizada_baixada:qtde_utilizada_baixada, qtde_laboratorio:qtde_laboratorio,osprodutopeca_id: osprodutopeca_id, os_id: os_id, produto_id_peca: produto_id_peca, clienteconfig_id: clienteconfig_id},
+						async: false,
+						success: function(data) {
+							//alert(data);
+							getPecaLista();
+							if (clienteconfig_id == 20 || clienteconfig_id == 82) {
+								var os_cobertura = $("#os_cobertura").val();
+								if (os_cobertura == 'GARANTEC-ESTENDIDA' || os_cobertura == 'LUIZASEG-ESTENDIDA' || os_cobertura == 'CARDIF-ESTENDIDA' || os_cobertura == 'ZURICH-ESTENDIDA' || os_cobertura == 'ZURICH-FAST-ESTENDIDA' || os_cobertura == 'ASSURANT-ESTENDIDA' || os_cobertura == 'VIRGINIA-ESTENDIDA' || os_cobertura == 'ASSURANT CELULAR-ESTENDIDA' || os_cobertura == 'VIRGINIA CELULAR-ESTENDIDA') {	
+									var qtde_item = $('#tabela_peca>tbody>tr').length;
+									var valor_total = $("#valor_total").val();
+									if (valor_total < 110) {
+										if (qtde_item == 0) {
+											cont_total = 0;
+										}
+									}
+								}
+							}
+						}
+					});
+						
+					if (qtde_utilizada_baixada > 0 || qtde_laboratorio > 0){
+
+						alert('Pecas utilizada(s) e no laboratorio foram movidas para NAO UTILIZADA(S) para dar entrada no Estoque!');
+					}
+				}
 			}
 		}
 
-		function inserir_peca_externa(peca){
-			
-
-			var os_id = $("#os_id").val();
-			var produto_id = $("#produto_id").val();
-			var produto_id_peca = $("#produto_id_peca").val();
-			var clienteconfig_id = $("#clienteconfig_id").val();
-			var linha_id = $("#linha_id").val();
-			var os_cobertura = $("#os_cobertura").val();
-			var peca_complementar = '';
-			
-			if(clienteconfig_id == '123') {
-			    peca_complementar = $("#peca_complementar").val();
+		function excluiCadastroTodos() {
+			if (confirm("<?=fct_get_var('global.php', 'var_confirma_exclusao', $_SESSION["care-br"]["idioma_id"])?>")) {
+				var os_id = $("#os_id").val();
+				var clienteconfig_id = $("#clienteconfig_id").val();
+				var osprodutopeca_id;
+				$(".osprodutopeca_id").each(function(){
+					osprodutopeca_id = $(this).val();
+					var produto_id_peca = $("#produto_id_estoque_" + osprodutopeca_id).val();
+					excluiCadastro(osprodutopeca_id, produto_id_peca, 'S');
+				});
 			}
-
-			
-			$.ajax({
-			  type: "POST",
-			  url: 'os_controle_aguarda_analise_acao.php',
-			  data: {acao: 'add_peca_lista', linha_id:linha_id,os_cobertura:os_cobertura,os_id: os_id, produto_id: produto_id, produto_id_peca: produto_id_peca, clienteconfig_id: clienteconfig_id, peca_complementar: peca_complementar},
-			  async: false,
-			  success: function(data) {
-				//getPecaLista();
-				//getServicoLista();
-			  }
-			});
+			getPecaLista();
 		}
 		
 		function getPecaLista(){
@@ -905,166 +915,30 @@ if ($acao == "add"){
 			var produto_id = $("#produto_id").val();
 			var os_peca_precisa = $(".os_peca_precisa").val();
 			var clienteconfig_id = $("#clienteconfig_id").val();
-			var cliente_id = $("#cliente_id").val();
 			var os_cobertura = $("#os_cobertura").val();
-			var modelo_consulta = $("#modelo_consulta_peca").val();
-
-			if (os_peca_precisa == "S") {
-				// $("#servico_lista").hide();
-				var pecas_gspn;
+			if (os_peca_precisa == "S"){
 				$.ajax({
-					type: "POST",
-					url: 'os_controle_aguarda_analise_edicao.php',
-					data: {acao: 'get_peca_lista', os_id: os_id, produto_id: produto_id,clienteconfig_id:clienteconfig_id,os_cobertura:os_cobertura},
-					async: false,
-					success: function(data) {
-						$("#peca_lista").html(data);
-						
-						$.ajax({
-							type: "POST",
-							url: 'gspn/acao.php',
-							data: {acao: 'get_peca_lista', os_id: os_id, modelo_consulta: modelo_consulta, cliente_id: cliente_id},
-							async: false,
-							success: function(data) {
-								var retorno = JSON.parse(data);
-								
-								$("#produto_id_peca").html("<option>Selecione...</option>");
+				  type: "POST",
+				  url: 'os_controle_aguarda_analise_edicao.php',
+				  data: {acao: 'get_peca_lista', os_id: os_id, produto_id: produto_id,clienteconfig_id:clienteconfig_id,os_cobertura:os_cobertura},
+				  async: false,
+				  success: function(data) {
+					$("#peca_lista").html(data);
+					
+					$( "#produto_id_peca" ).combobox({
+						select: function(event, ui) {
+				           addPecaLista();
+				        }
+					});
 
-								if(retorno.code) { 
-									var pecas = retorno.data;
-
-									$(pecas).each(function(i, v) { 
-										var opt = `<option value="${v.PartsNo}">${v.Location} | ${v.PartsNo} - ${v.PartsDesc}</option>`;
-										$("#produto_id_peca").append(opt);
-									});
-
-								}	
-								pecas_gspn=retorno.data;								
-
-
-
-								
-							}
-						});
-                        <?
-						$rotina_link = fct_get_rotina_invisivel(VAR_MENU_CABECALHO, 'geral.php');
-							$acesso_liberado = strpos($rotina_link, "pecas_externas");
-						if ($acesso_liberado){
-						?>
-
-						$.ajax({
-						  type: "POST",
-						  url: 'os_controle_aguarda_analise_csp.php',
-						  data: {acao: 'get_produto_externo', produto_id: produto_id,pecas_gspn:pecas_gspn},
-						  async: false,
-						  success: function(data) { 
-						  	$("#produto_id_peca").append(data);
-						  }
-						});	
-
-						<?}?>
-
-
-						$("#produto_id_peca").attr("onchange", "addPecaLista()");
-
-						$( "#produto_id_peca" ).combobox({
-							select: function(event, ui) {
-								addPecaListaCRC();
-								getPecaLista();
-								getServicoLista();
-							}
-						});
-
-						// $("#produto_id_peca" ).combobox({
-						// 		select: function(event, ui) {
-						// 		addPecaLista();
-						// 	}
-						// });
-					}
+				  }
 				});
-			}
-			else{
-				// $("#servico_lista").show();
+			}else{
 				$("#peca_lista").html("");
 			}
 			getStatusNovo();
 		}
 
-		function addPecaListaCRC() {
-			var os_id = $("#os_id").val();
-			var produto_id = $("#produto_id").val();
-			var produto_id_peca = $("#produto_id_peca").val();
-			var clienteconfig_id = $("#clienteconfig_id").val();
-			var linha_id = $("#linha_id").val();
-			var os_cobertura = $("#os_cobertura").val();
-			var cliente_id = $("#cliente_id").val(); 
-			var produto_texto=$("#produto_id_peca").text();
-
-			// console.log(produto_id_peca);
-			if (produto_texto.indexOf("Fora GSPN")>0){
-				inserir_peca_externa(produto_id_peca);
-				//return false;
-			}else{
-
-				$.ajax({
-					type: "POST",
-					url: 'gspn/acao.php',
-					data: {acao: 'get_peca_info', parts_no: produto_id_peca, cliente_id: cliente_id},
-					async: false,
-					success: function(data) {
-						var retorno = JSON.parse(data);
-						// console.log(data);
-						if(retorno.code == 0)
-							alert(retorno.msg);
-						
-						// else { 
-							var peca = retorno.data;
-							var pecas = { 
-								modelo: peca.PartsNo,
-								qtd: 1,
-								descricao:  peca.PartsDescription
-							}
-							cadPecaGSPN(pecas, produto_id);
-						// }
-					}
-				});
-		    }
-		}
-
-		// function getPecaLista(){
-		// 	var os_id = $("#os_id").val();
-		// 	var produto_id = $("#produto_id").val();
-		// 	var os_peca_precisa = $(".os_peca_precisa").val();
-		// 	var clienteconfig_id = $("#clienteconfig_id").val();
-		// 	var os_cobertura = $("#os_cobertura").val();
-		// 	var modelo_consulta = $("#modelo_consulta_peca").val();
-
-		// 	if (os_peca_precisa == "S") {
-		// 		$("#servico_lista").hide();
-		// 		$.ajax({
-		// 			type: "POST",
-		// 			url: 'os_controle_aguarda_analise_edicao.php',
-		// 			data: {acao: 'get_peca_lista', os_id: os_id, produto_id: produto_id,clienteconfig_id:clienteconfig_id,os_cobertura:os_cobertura},
-		// 			async: false,
-		// 			success: function(data) {
-		// 				$("#peca_lista").html(data);
-						
-		// 				$("#produto_id_peca" ).combobox({
-		// 						select: function(event, ui) {
-		// 						addPecaLista();
-		// 					}
-		// 				});
-		// 			}
-		// 		});
-		// 	}
-		// 	else{
-		// 		$("#servico_lista").show();
-		// 		$("#peca_lista").html("");
-		// 	}
-		// 	getStatusNovo();
-		// }
-		
-		
 		var cont_total = 0;
 		
 		function addPecaLista(){
@@ -1077,7 +951,7 @@ if ($acao == "add"){
 			var peca_complementar = '';
 			if(clienteconfig_id == '11'){
 				os_cobertura = 'ORCAMENTO';
-			} else if(clienteconfig_id == '123') {
+			} else if(clienteconfig_id == 101 || clienteconfig_id == 110 || clienteconfig_id == 112 || clienteconfig_id == 123 || clienteconfig_id == 124 || clienteconfig_id == 131 || (b2x_csp_os.indexOf("|"+clienteconfig_id+"|")>0) ) {
 			    peca_complementar = $("#peca_complementar").val();
 			}
 
@@ -1094,188 +968,66 @@ if ($acao == "add"){
 			});
 		}
 		
-		// function updtPecaLista(osprodutopeca_id,produto_id_peca){
-		// 	var osprodutopeca_qtde = $("#osprodutopeca_qtde_" + osprodutopeca_id).val();
-        //     var clienteconfig_id = $("#clienteconfig_id").val();
-        //     var os_id = $("#os_id").val();
-        //     var os_cobertura = $("#os_cobertura").val();
-        //     if(clienteconfig_id == '11'){
-		// 		os_cobertura = 'ORCAMENTO';
-		// 	}
-        //     var osprodutopeca_cobrar = $("#osprodutopeca_cobrar_" + osprodutopeca_id).val();
-			
-		// 	qtde_reservada = $("#estoque_status_64_" + osprodutopeca_id).val();
-		// 	qtde_laboratorio = $("#estoque_status_68_" + osprodutopeca_id).val();
-		// 	qtde_utilizada_baixada = $("#estoque_status_62_" + osprodutopeca_id).val();
-		// 	qtde_nao_utilizada_baixada = $("#estoque_status_71_" + osprodutopeca_id).val();
-		// 	qtde_defeito_baixada = $("#estoque_status_70_" + osprodutopeca_id).val();
-		// 	estoque_id = $("#estoque_id_" + osprodutopeca_id).val();
-		// 	var produto_id_estoque = $("#produto_id_estoque_" + osprodutopeca_id).val();
-		// 	var estoque_qtde       = $("#estoque_qtde_" + produto_id_estoque).val();
-
-        //     // B2X Moema grava os valores da peça no Análise
-        //     var osprodutopeca_valor_venda = '';
-        //     var osprodutopeca_desconto = '';
-        //     var osprodutopeca_valor_mao_obra = '';
-        //     if (clienteconfig_id == 123) {
-        //         osprodutopeca_valor_venda = $("#osprodutopeca_valor_venda_" + osprodutopeca_id).val();
-        //         osprodutopeca_desconto = $("#osprodutopeca_desconto_" + osprodutopeca_id).val();
-        //         osprodutopeca_valor_mao_obra = $("#osprodutopeca_valor_mao_obra_" + osprodutopeca_id).val();
-
-        //         if (osprodutopeca_valor_venda == '') {
-        //             osprodutopeca_valor_venda = '0,00';
-        //         } 
-        //         if(osprodutopeca_desconto == '') {
-        //             osprodutopeca_desconto = '0,00';
-        //         }
-        //         if(osprodutopeca_valor_mao_obra == '') {
-        //             osprodutopeca_valor_mao_obra = '0,00';
-        //         }
-        //     }
-
-		// 	//total = parseInt(qtde_reservada) + parseInt(qtde_utilizada_baixada) + parseInt(qtde_laboratorio) + parseInt(qtde_nao_utilizada_baixada) + parseInt(qtde_defeito_baixada);
-		// 	ver = parseInt(osprodutopeca_qtde) - (parseInt(qtde_utilizada_baixada) + parseInt(qtde_laboratorio));
-			
-		// 	/*if(ver < 0){
-
-		// 		alert('Peça já utilizada!');
-		// 		return;
-
-		// 	}*/
-
-		// 	$.ajax({
-		// 	  type: "POST",
-		// 	  url: 'os_controle_aguarda_analise_acao.php',
-		// 	  data: {acao: 'updt_peca_lista',estoque_id:estoque_id, qtde_nao_utilizada_baixada:qtde_nao_utilizada_baixada ,qtde_reservada:qtde_reservada,qtde_defeito_baixada: qtde_defeito_baixada, qtde_utilizada_baixada:qtde_utilizada_baixada, qtde_laboratorio:qtde_laboratorio,os_cobertura:os_cobertura,produto_id_peca:produto_id_peca, clienteconfig_id:clienteconfig_id, osprodutopeca_id: osprodutopeca_id, osprodutopeca_cobrar:osprodutopeca_cobrar , osprodutopeca_qtde: osprodutopeca_qtde, estoque_id: estoque_id, os_id: os_id, osprodutopeca_valor_venda: osprodutopeca_valor_venda, osprodutopeca_desconto: osprodutopeca_desconto, osprodutopeca_valor_mao_obra: osprodutopeca_valor_mao_obra},
-		// 	  async: false,
-		// 	  success: function(data) {
-		// 	  	//alert(data);
-		// 		getPecaLista();
-		// 	  }
-		// 	});
-		// }
-
-		function updtPecaLista(osprodutopeca_id){
-
-			// var retorno_lista = conferirTabelaVendaLista(osprodutopeca_id);
-
-			$('.modal').show();
-			var erro_valor_peca = false;
-
-			if (osprodutopeca_id != ""){
-				// altera?o de 1 ?nica linha
-				var osprodutopeca_qtde 				= $("#osprodutopeca_qtde_" + osprodutopeca_id).val();
-				var osprodutopeca_valor_compra 		= $("#osprodutopeca_valor_compra_" + osprodutopeca_id).val();
-				var osprodutopeca_valor_venda 		= $("#osprodutopeca_valor_venda_" + osprodutopeca_id).val();
-				var osprodutopeca_valor_mao_obra 	= $("#osprodutopeca_valor_mao_obra_" + osprodutopeca_id).val();
-				var osprodutopeca_cobrar 			= $("#osprodutopeca_cobrar_" + osprodutopeca_id).val();
-				var osprodutopeca_aprovado 			= $("#osprodutopeca_aprovado_" + osprodutopeca_id).val();
-				var osprodutopeca_compra 			= 'N';
-				var osprodutopeca_observacao 		= $("#osprodutopeca_observacao_" + osprodutopeca_id).val();
-				var osprodutopeca_desconto 			= $("#osprodutopeca_desconto_" + osprodutopeca_id).val();
-				var osprodutopeca_servico_adicional = $("#osprodutopeca_servico_adicional_" + osprodutopeca_id).val();
-				var osprodutopeca_valor_venda 		= $("#osprodutopeca_valor_venda_" + osprodutopeca_id).val();
-				var osprodutopeca_custo 			= $("#osprodutopeca_custo_" + osprodutopeca_id).val();
-				var cobrar_peca 					= $("#osprodutopeca_cobrar_" + osprodutopeca_id).val(); 
-
-				var osprodutopeca_valor_compra 		= $("input[nome_campo='valor_gspn_"+osprodutopeca_id+"']").attr('val_campo');
-				osprodutopeca_valor_compra = osprodutopeca_valor_compra.replace('.', ',');//Para ficar no formato onde vai ser salvo
-
-				//Tratamento da regra de 1.8 do valor de venda sobre o valor de compra
-				$("#msg_erro_valor_venda_"+ osprodutopeca_id).hide();
-				
-				if (cobrar_peca == 'S') {
-
-					var venda = osprodutopeca_valor_venda.replace('.', '');
-					var venda = venda.replace(',', '.');
-
-					venda = parseFloat(venda);
-					venda = venda + 0.01;
-
-					if ( (venda / osprodutopeca_custo) < 1.8) {
-						
-						$("#msg_erro_valor_venda_"+ osprodutopeca_id).show();
-						
-						$('.modal').hide();
-						return false;
-					}
-				}
-
-				$.ajax({
-				  type: "POST",
-				  url: 'os_controle_aguarda_orcamento_acao.php',
-				  async: false,
-				  data: {acao: 'updt_peca_lista', osprodutopeca_valor_desconto:osprodutopeca_desconto ,osprodutopeca_id: osprodutopeca_id, osprodutopeca_valor_compra: osprodutopeca_valor_compra, osprodutopeca_valor_venda: osprodutopeca_valor_venda, osprodutopeca_valor_mao_obra: osprodutopeca_valor_mao_obra, osprodutopeca_cobrar: osprodutopeca_cobrar, osprodutopeca_qtde: osprodutopeca_qtde, osprodutopeca_aprovado: osprodutopeca_aprovado, osprodutopeca_compra: osprodutopeca_compra, osprodutopeca_observacao: osprodutopeca_observacao, osprodutopeca_servico_adicional:osprodutopeca_servico_adicional},
-				  success: function(data) {
-				  	$('.modal').hide();
-                    //getPecaLista();
-                    if ($('#clienteconfig_id').val() == 104) {
-                        alert('Favor confirmar a OS para salvar todos os valores!');
-                    }
-				  }
-				});
-			}else{
-				// altera?o de todas as linhas
-				var osprodutopeca_id;
-				$(".osprodutopeca_id").each(function(){
-					osprodutopeca_id = $(this).val();
-					var osprodutopeca_qtde 				= $("#osprodutopeca_qtde_" + osprodutopeca_id).val();
-					var osprodutopeca_valor_compra 		= $("#osprodutopeca_valor_compra_" + osprodutopeca_id).val();
-					var osprodutopeca_valor_venda 		= $("#osprodutopeca_valor_venda_" + osprodutopeca_id).val();
-					var osprodutopeca_valor_mao_obra 	= $("#osprodutopeca_valor_mao_obra_" + osprodutopeca_id).val();
-					var osprodutopeca_cobrar 			= $("#osprodutopeca_cobrar_" + osprodutopeca_id).val();
-					var osprodutopeca_aprovado 			= $("#osprodutopeca_aprovado_" + osprodutopeca_id).val();
-					var osprodutopeca_compra 			= 'N';
-					var osprodutopeca_observacao 		= $("#osprodutopeca_observacao_" + osprodutopeca_id).val();
-					var osprodutopeca_desconto 			= $("#osprodutopeca_desconto_" + osprodutopeca_id).val();
-					var osprodutopeca_servico_adicional = $("#osprodutopeca_servico_adicional_" + osprodutopeca_id).val();
-					var osprodutopeca_custo 			= $("#osprodutopeca_custo_" + osprodutopeca_id).val();
-					var cobrar_peca 					= $("#osprodutopeca_cobrar_" + osprodutopeca_id).val(); 
-
-
-					//Tratamento da regra de 1.8 do valor de venda sobre o valor de compra
-					var erro_valor = false;
-					
-					$("#msg_erro_valor_venda_"+ osprodutopeca_id).hide();
-					var venda = osprodutopeca_valor_venda.replace('.', '');
-					var venda = venda.replace(',', '.');
-
-					venda = parseFloat(venda);
-					venda = venda + 0.01;
-
-					if ( (venda / osprodutopeca_custo) < 1.8) {
-						
-						if (cobrar_peca == 'S') {
-							$("#msg_erro_valor_venda_"+ osprodutopeca_id).show();
-							$('.modal').hide();
-							erro_valor 		= true;
-							erro_valor_peca = true;
-						}						
-					}else{
-						$("#msg_erro_valor_venda_"+ osprodutopeca_id).hide();
-					}
-
-					if (!erro_valor) {
-						$.ajax({
-						  type: "POST",
-						  url: 'os_controle_aguarda_orcamento_acao.php',
-						  async: false,
-						  data: {acao: 'updt_peca_lista',osprodutopeca_valor_desconto:osprodutopeca_desconto , osprodutopeca_id: osprodutopeca_id, osprodutopeca_valor_compra: osprodutopeca_valor_compra, osprodutopeca_valor_venda: osprodutopeca_valor_venda, osprodutopeca_valor_mao_obra: osprodutopeca_valor_mao_obra, osprodutopeca_cobrar: osprodutopeca_cobrar, osprodutopeca_qtde: osprodutopeca_qtde, osprodutopeca_aprovado: osprodutopeca_aprovado, osprodutopeca_compra: osprodutopeca_compra, osprodutopeca_observacao: osprodutopeca_observacao, osprodutopeca_servico_adicional:osprodutopeca_servico_adicional},
-						  success: function(data) {
-						  	$('.modal').hide();
-	                        //getPecaLista();
-	                        if ($('#clienteconfig_id').val() == 104) {
-	                            alert('Favor confirmar a OS para salvar todos os valores!');
-	                        }
-						  }
-						});
-					}
-				});
+		function updtPecaLista(osprodutopeca_id,produto_id_peca){
+			var osprodutopeca_qtde = $("#osprodutopeca_qtde_" + osprodutopeca_id).val();
+            var clienteconfig_id = $("#clienteconfig_id").val();
+            var os_id = $("#os_id").val();
+            var os_cobertura = $("#os_cobertura").val();
+            if(clienteconfig_id == '11'){
+				os_cobertura = 'ORCAMENTO';
 			}
+            var osprodutopeca_cobrar = $("#osprodutopeca_cobrar_" + osprodutopeca_id).val();
+			
+			qtde_reservada = $("#estoque_status_64_" + osprodutopeca_id).val();
+			qtde_laboratorio = $("#estoque_status_68_" + osprodutopeca_id).val();
+			qtde_utilizada_baixada = $("#estoque_status_62_" + osprodutopeca_id).val();
+			qtde_nao_utilizada_baixada = $("#estoque_status_71_" + osprodutopeca_id).val();
+			qtde_defeito_baixada = $("#estoque_status_70_" + osprodutopeca_id).val();
+			estoque_id = $("#estoque_id_" + osprodutopeca_id).val();
+			var produto_id_estoque = $("#produto_id_estoque_" + osprodutopeca_id).val();
+			var estoque_qtde       = $("#estoque_qtde_" + produto_id_estoque).val();
 
-			if (!erro_valor_peca){
+            // B2X Moema / SES grava os valores da peça no Análise
+            var osprodutopeca_valor_venda = '';
+            var osprodutopeca_desconto = '';
+            var osprodutopeca_valor_mao_obra = '';
+            var b2x_csp_os="<?=B2X_CSP_OS?>";
+            if (clienteconfig_id == 101 || clienteconfig_id == 110 || clienteconfig_id == 112 || clienteconfig_id == 123 || clienteconfig_id == 124 || clienteconfig_id == 131 || (b2x_csp_os.indexOf("|"+clienteconfig_id+"|")>0) ) {
+                osprodutopeca_valor_venda = $("#osprodutopeca_valor_venda_" + osprodutopeca_id).val();
+                osprodutopeca_desconto = $("#osprodutopeca_desconto_" + osprodutopeca_id).val();
+                osprodutopeca_valor_mao_obra = $("#osprodutopeca_valor_mao_obra_" + osprodutopeca_id).val();
+
+                if (osprodutopeca_valor_venda == '') {
+                    osprodutopeca_valor_venda = '0,00';
+                } 
+                if(osprodutopeca_desconto == '') {
+                    osprodutopeca_desconto = '0,00';
+                }
+                if(osprodutopeca_valor_mao_obra == '') {
+                    osprodutopeca_valor_mao_obra = '0,00';
+                }
+            }
+
+			//total = parseInt(qtde_reservada) + parseInt(qtde_utilizada_baixada) + parseInt(qtde_laboratorio) + parseInt(qtde_nao_utilizada_baixada) + parseInt(qtde_defeito_baixada);
+			ver = parseInt(osprodutopeca_qtde) - (parseInt(qtde_utilizada_baixada) + parseInt(qtde_laboratorio));
+			
+			/*if(ver < 0){
+
+				alert('Peça já utilizada!');
+				return;
+
+			}*/
+
+			$.ajax({
+			  type: "POST",
+			  url: 'os_controle_aguarda_analise_acao.php',
+			  data: {acao: 'updt_peca_lista',estoque_id:estoque_id, qtde_nao_utilizada_baixada:qtde_nao_utilizada_baixada ,qtde_reservada:qtde_reservada,qtde_defeito_baixada: qtde_defeito_baixada, qtde_utilizada_baixada:qtde_utilizada_baixada, qtde_laboratorio:qtde_laboratorio,os_cobertura:os_cobertura,produto_id_peca:produto_id_peca, clienteconfig_id:clienteconfig_id, osprodutopeca_id: osprodutopeca_id, osprodutopeca_cobrar:osprodutopeca_cobrar , osprodutopeca_qtde: osprodutopeca_qtde, estoque_id: estoque_id, os_id: os_id, osprodutopeca_valor_venda: osprodutopeca_valor_venda, osprodutopeca_desconto: osprodutopeca_desconto, osprodutopeca_valor_mao_obra: osprodutopeca_valor_mao_obra},
+			  async: false,
+			  success: function(data) {
+			  	//alert(data);
 				getPecaLista();
-			}
+			  }
+			});
 		}
 
 		function getProdutoEmprestimo(){
@@ -1350,7 +1102,7 @@ if ($acao == "add"){
 			  success: function(data) {
 			  	if(data !="")
 				laudo_tipo = data;
-			  } 
+			  }
 			});		
 
 			if(laudo_tipo != ""){				
@@ -1358,6 +1110,7 @@ if ($acao == "add"){
 				return;
 			}	
 		}
+		
 		
 		function getServicoLista(){
 			var cliente_id = $("#cliente_id").val();
@@ -1479,6 +1232,21 @@ if ($acao == "add"){
 				getServicoLista();
 			  }
 			});
+
+			if ($("#os_cobertura").val() == 'HHP - LP' && ($("#clienteconfig_id").val() == 101 || $("#clienteconfig_id").val() == 110 || $("#clienteconfig_id").val() == 112 || $("#clienteconfig_id").val() == 124)) {
+				var ok = true;
+				$(".osprodutopeca_id").each(function(){
+					osprodutopeca_id = $(this).val();
+					var osprodutopeca_qtde = $("#osprodutopeca_qtde_" + osprodutopeca_id).val();
+					var estoque_qtde = $("input[name='estoque_qtde_" + osprodutopeca_id + "']").val();
+					if (osprodutopeca_qtde > estoque_qtde) {
+						ok = false;
+					}
+				});
+				if (!ok) {
+					$("#status_id_novo").html('<option title="<?=utf8_decode('Aguardando Peça')?>" alt="<?=utf8_decode('Aguardando Peça')?>" value="14"><?=utf8_decode('Ag. Peça')?></option>');
+				}
+			}
 		}
 
 		function dialogComentariogeral(){
@@ -1601,74 +1369,6 @@ if ($acao == "add"){
 				break;
 			}
 		}
-
-		function getDesconto(desconto) {
-			var os_id = $("#os_id").val();
-			var produto_id = $("#produto_id").val();
-			var clienteconfig_id = $("#clienteconfig_id").val();
-			var os_cobertura = $("#os_cobertura").val();
-			var cliente_id = $("#cliente_id").val();
-			var modelo_consulta = $("#modelo_consulta_peca").val();
-
-			
-			$.ajax({
-				type: "POST",
-				url: 'os_controle_aguarda_analise_edicao.php',
-				data: {
-					acao: 'get_peca_lista',
-					os_id: os_id,
-					produto_id: produto_id,
-					clienteconfig_id: clienteconfig_id,
-					os_cobertura: os_cobertura,
-					desconto: desconto
-				},
-				async: false,
-				success: function(data) {
-					$("#peca_lista").html(data);
-					// getPecaLista();
-					
-					$.ajax({
-						type: "POST",
-						url: 'gspn/acao.php',
-						data: {acao: 'get_peca_lista', os_id: os_id, modelo_consulta: modelo_consulta, cliente_id: cliente_id},
-						async: false,
-						success: function(data) {
-							var retorno = JSON.parse(data);
-							
-							$("#produto_id_peca").html("<option>Selecione...</option>");
-
-							if(retorno.code) { 
-								var pecas = retorno.data;
-
-								$(pecas).each(function(i, v) { 
-									var opt = `<option value="${v.PartsNo}">${v.Location} | ${v.PartsNo} - ${v.PartsDesc}</option>`;
-									$("#produto_id_peca").append(opt);
-								});
-
-							}									
-
-							$("#produto_id_peca").attr("onchange", "addPecaListaCRC()");
-
-							$( "#produto_id_peca" ).combobox({
-								select: function(event, ui) {
-									addPecaListaCRC();
-									getPecaLista();
-									getServicoLista();
-								}
-							});
-						}
-					});
-					
-					// $("#produto_id_peca" ).combobox({
-					// 	select: function(event, ui) {
-					// 		addPecaLista();
-					// 	}
-					// });
-				}
-			});
-			getStatusNovo();
-			return false;
-		}
 	</script>
 	
 	<div class="page secondary">
@@ -1688,10 +1388,10 @@ if ($acao == "add"){
 						<input type="hidden" name="cliente_id" id="cliente_id" value="<?=$cliente_id?>" />
 						<input type="hidden" name="clienteconfig_id" id="clienteconfig_id" value="<?=$clienteconfig_id?>" />
 						<input type="hidden" name="status_id" id="status_id" value="<?=$status_id?>" />
+						<input type="hidden" name="substatus_id" id="substatus_id" value="<?=$substatus_id?>" />
 						<input type="hidden" name="os_id" id="os_id" value="<?=$os_id?>" />
 						<input type="hidden" name="produto_id" id="produto_id" value="<?=$dados_cadastro[0]["produto_id"]?>" />
 						<input type="hidden" name="numero_id" id="numero_id" value="<?=$numero_id?>" />
-
 						<fieldset>
                         <legend style="color:black; font-weight: bold">Dados Cliente</legend>
 						<div class="row">
@@ -1863,7 +1563,7 @@ if ($acao == "add"){
 							<div class="span3 campos-form">
 								<label>
                                     <?
-                                        if ($clienteconfig_id == 123 || $clienteconfig_id == 101 || $clienteconfig_id == 110 || $clienteconfig_id == 112 || $clienteconfig_id == 124 || $clienteconfig_id == 133 || $clienteconfig_id == 131 || $clienteconfig_id == 139 || $clienteconfig_id == 141 || (strpos(B2X_SES_OS,"|".$clienteconfig_id."|")>0) ) { 
+                                        if ($clienteconfig_id == 101 || $clienteconfig_id == 110 || $clienteconfig_id == 112 || $clienteconfig_id == 123 || $clienteconfig_id == 124 || $clienteconfig_id == 131 || $clienteconfig_id == 136) {
                                             echo "Service GSPN";
                                         } else {
                                             fct_get_var('global.php', 'var_os_chamado', $_SESSION["care-br"]["idioma_id"]);
@@ -1871,19 +1571,11 @@ if ($acao == "add"){
                                     ?>
 									<i class="icon-help"></i>
 									<div class="tooltip">
-
-											<?=fct_get_var('global.php', 'var_os_chamado_help', $_SESSION["care-br"]["idioma_id"])?>
+										<?=fct_get_var('global.php', 'var_os_chamado_help', $_SESSION["care-br"]["idioma_id"])?>
 									</div>
 								</label>
-
-								<input type="hidden" id="modelo_consulta_peca" name="modelo_consulta_peca" value="<?=$dados_cadastro[0]["os_produto_codigo"]?>"/>
-
 								<div class="input-control text">
-									<? if($clienteconfig_id == 101 || $clienteconfig_id == 110 || $clienteconfig_id == 112 || $clienteconfig_id == 124 || $clienteconfig_id == 133 || $clienteconfig_id == 123 || $clienteconfig_id == 131 || (strpos(B2X_SES_OS.B2X_CSP_OS,"|".$clienteconfig_id."|")>0) ) {  ?>
-											<input type="text" id="os_chamado_numero" name="os_chamado_numero" value="<?=($dados_cadastro[0]["os_imei2"]  == "" ? $dados_cadastro[0]["os_chamado_numero"] : $dados_cadastro[0]["os_imei2"])?>" disabled />
-									<? } else {   ?>
-											<input type="text" id="lista_os" name="lista_os" value="<?=$dados_cadastro[0]["os_chamado_numero"]?>" disabled />
-									<? }  ?>
+									<input type="text" id="lista_os" name="lista_os" value="<?=$dados_cadastro[0]["os_chamado_numero"]?>" disabled />
 								</div>
 							</div>
 							<div class="span4 campos-form">
@@ -1907,7 +1599,7 @@ if ($acao == "add"){
 									</div>
 								</label>
 								<div class="input-control text">
-									<input type="text" id="tipo_isento_taxa" name="tipo_isento_taxa" value="<?=$dados_cadastro[0]["tipo_isento_taxa"]?>" disabled />
+									<input type="text" id="lista_os" name="lista_os" value="<?=$dados_cadastro[0]["tipo_isento_taxa"]?>" disabled />
 								</div>
 							</div>
 							<div class="span6 campos-form">
@@ -2232,56 +1924,9 @@ if ($acao == "add"){
 						
 						<!-- carregar lista de peças requeridas aqui -->
 						<div id="peca_lista"></div>
-						<?
-					      $sqlnf='select os_id from tb_prod_nfe where os_id='.$os_id." and ide_natOp = 'Venda de Mercadoria' and status_id<>52";
-					      $resnf=$conn->sql($sqlnf);
-					      $nf='';
-					      if (mysqli_num_rows($resnf)>0){
-					            $nf='NF gerada';
-					      }
-					      if ($nf!=''){}else{
-					      
-					    ?>
 
-
-						<?
-							// opcoes de desconto de acordo com rotinas
-							// desconto de 5%
-							$rotina_link = fct_get_rotina_invisivel(VAR_MENU_CABECALHO, 'geral.php');
-							$acesso_liberado = strpos($rotina_link, "desconto_5");
-							if ($acesso_liberado){
-								?>
-								<button onclick="getDesconto(5);return false;">Desconto de 5%</button>
-								<?
-							}
-
-							// desconto de 10%
-							$rotina_link = fct_get_rotina_invisivel(VAR_MENU_CABECALHO, 'geral.php');
-							$acesso_liberado = strpos($rotina_link, "desconto_10");
-							if ($acesso_liberado){
-								?>
-								<button onclick="getDesconto(10);return false;">Desconto de 10%</button>
-								<?
-							}
-
-							// desconto de 15%
-							$rotina_link = fct_get_rotina_invisivel(VAR_MENU_CABECALHO, 'geral.php');
-							$acesso_liberado2 = strpos($rotina_link, "desconto_15");
-							if ($acesso_liberado2){
-								?>
-								<button onclick="getDesconto(15);return false;">Desconto de 15%</button>
-								<?
-							}
-
-							if ($acesso_liberado || $acesso_liberado2) {
-								?>
-								<button onclick="getDesconto('remover');return false;">Remover Desconto</button>
-								<?
-							}
-						?>
-                        <?}?>
 						<!-- carregar lista de peças requeridas aqui -->
-						<div id="servico_lista" style="display: block!important"></div>
+						<div id="servico_lista"></div>
 						<script>getServicoLista();</script>
 												
 						<div class="row">
@@ -2634,7 +2279,7 @@ if ($acao == "add"){
 									
                                     <?
                                         $tamanho = '5';
-                                        if ($clienteconfig_id == 123) {
+                                        if ($clienteconfig_id == 101 || $clienteconfig_id == 110 || $clienteconfig_id == 112 || $clienteconfig_id == 123 || $clienteconfig_id == 124 || $clienteconfig_id == 131) {
                                             $tamanho = '6';
                                         }
                                     ?>
@@ -2655,13 +2300,10 @@ if ($acao == "add"){
 								}
 							}
 
-
-
 							if(trim($dados_cadastro[0]['os_produto_retorno_cliente']) == 'Retorno Cliente' && $dados_cadastro[0]["os_produto_serial"] != ''){
 								verifica_reincidencia($os_id, $clienteconfig_id, $dados_cadastro[0]["os_produto_serial"]);
 							}
 							?>	
-
 							</div>
 							Recebimentos Gerados:
 							<?
@@ -2708,17 +2350,15 @@ if ($acao == "add"){
                                     $sql_buscar_pagamentos = "SELECT * FROM tb_cad_pagamento WHERE os_id='".$os_id."' AND pagamento_situacao != 'cancelado' AND empresa_id = '".$tmp_recebimento_automativo['empresacliente_id']."' AND empresa_id > 0 ORDER BY pagamento_id DESC";
                                     $res_buscar_pagamentos = $conn->sql($sql_buscar_pagamentos);
                                     $num_buscar_pagamentos = mysqli_num_rows($res_buscar_pagamentos);
-    								
-                                    $total_pagamento = 0;
-
+    
                                     for($x=1; $x<=$num_buscar_pagamentos; $x++){
                                         $obj_buscar_pagamentos = mysqli_fetch_object($res_buscar_pagamentos);
                                         if($obj_buscar_pagamentos->pagamento_valor_pago > 0){
-                                            $total_pagamento += $obj_buscar_pagamentos->pagamento_valor_pago;
+                                            $total_recibo -= $obj_buscar_pagamentos->pagamento_valor_pago;
                                         }else{
                                             // caso recibo seja credito considerar o valor 
                                             if($obj_buscar_pagamentos->pagamento_forma_pagamento == 'cartao' || $obj_buscar_pagamentos->pagamento_forma_pagamento == 'cheque'){
-                                                $total_pagamento += $obj_buscar_pagamentos->pagamento_valor;
+                                                $total_recibo -= $obj_buscar_pagamentos->pagamento_valor;
                                             }
                                         }
                                         
@@ -2727,9 +2367,6 @@ if ($acao == "add"){
                                         $recibo .=  '<tr><td>Parcela: '.$x.'</td><td>Parcela: '.$obj_buscar_pagamentos->pagamento_descricao.'</td><td>'. 'R$'.number_format($obj_buscar_pagamentos->pagamento_valor, 2, ",",".").'</td><td>' . $obj_buscar_pagamentos->pagamento_data_vencimento . '</td><td>'.$obj_buscar_pagamentos->pagamento_forma_pagamento.'</td><td>'.$obj_buscar_pagamentos->pagamento_valor_pago.'</td></tr>';
                                         }
                                     }
-
-                                    $total_recibo = $total_recibo - $total_pagamento;
-
                                     if($num_buscar_recebimentos == 0){
                                         $recibo.= "<tr><td colspan='5'><center>Nenhum Registro Encontrado</center></td></tr>";
                                     }
@@ -2741,7 +2378,7 @@ if ($acao == "add"){
 
                                 echo "<input type='hidden' id='valor_recebido' value='$total_recibo'/>";
                                 echo 'Valor Recebido/Entrada: <b>'.$total_recibo.'</b></br>';
-                             ?>	
+                             ?>
 
 							<div class="span6 campos-form">
 								<label>
@@ -2819,100 +2456,6 @@ if ($acao == "add"){
 			</div>
         </div>
     </div>
-
-	<script>
-		$(document).ready(function() { 
-			$(".os_peca_precisa").val("S");
-			
-			//Comentado, pois o change dispara o getPecaLista() e o mesmo j� � chamado pelo getPecasGSPN
-			//$(".os_peca_precisa").change();
-			
-			var so = $("#os_chamado_numero").val();
-			var clienteconfig_id = $("#clienteconfig_id").val();
-			var b2x_ses_os="<?=B2X_SES_OS?>";
-
-			if(clienteconfig_id == 101 || clienteconfig_id == 110 || clienteconfig_id == 112 || clienteconfig_id == 124 || clienteconfig_id == 123 || clienteconfig_id == 131 || clienteconfig_id == 133 || clienteconfig_id == 139 || clienteconfig_id == 141 || (b2x_ses_os.indexOf("|"+clienteconfig_id+"|")>0) ) { 
-				getPecasGSPN();
-			}
-
-		});
-
-
-		function getPecasGSPN() { 
-			$(".modal").show();
-
-			var os_id = $("#os_id").val();		
-			var cliente_id = $("#cliente_id").val();
-			var clienteconfig_id = $("#clienteconfig_id").val();
-			var produto_id = $("#produto_id").val();
-			$("#os_peca_precisa").val("S");
-
-            var b2x_ses_os="<?=B2X_SES_OS?>";
-			// cliente_id são iguais para todas as SES, passar o clienteconfig_id
-			if (clienteconfig_id == 110 || clienteconfig_id == 112 || clienteconfig_id == 124 || clienteconfig_id == 123 || clienteconfig_id == 131 || clienteconfig_id == 133 || clienteconfig_id == 139 || (b2x_ses_os.indexOf("|"+clienteconfig_id+"|")>0) )
-				cliente_id = clienteconfig_id;
-
-			$.ajax({
-				type: "POST",
-				url: 'gspn/acao.php',
-				data: {acao: 'busca_peca_csp', os_id: os_id, cliente_id: cliente_id, clienteconfig_id: clienteconfig_id },
-				success: function(data) {
-					var pecas = JSON.parse(data);					
-					cadPecaGSPN(pecas, produto_id);
-					setTimeout(() => {
-						getPecaLista();
-						getServicoLista();
-						$(".modal").hide();
-					}, 200);
-				}
-			});
-		}
-		
-		function cadPecaGSPN(pecas, produto_id) { 
-			var os_id = $("#os_id").val();
-			var os_cobertura = $("#os_cobertura").val();
-			var clienteconfig_id = $("#clienteconfig_id").val();
-			console.dir(pecas);
-			console.dir(produto_id);
-
-			if(pecas == null)
-				return false;
-
-			var modalidade = $('#tipo_isento_taxa').val();
-			var display = $('.radioDisplay:checked');
-			var d = '';
-			if(modalidade == 'Assurant'){
-				if(display.length == 0){
-					alert("Selecione se � display para prosseguir!");
-					return false;
-				}
-				d = display.val();
-			}
-
-			// cadastras as pecas do gspn na OS
-			$(pecas).each(function(i, v) { 
-				$.ajax({
-					type: "POST",
-					url: 'os_controle_aguarda_orcamento_edicao.php',
-					data: {
-						acao: 'cad_peca_gspn', 
-						os_id: os_id, 
-						modelo: v.modelo, 
-						qtd: v.qtd, 
-						produto_id: produto_id, 
-						descricao: v.descricao,
-						os_cobertura: os_cobertura,
-						clienteconfig_id: clienteconfig_id,
-						display: d
-					},
-					success: function(data) { 
-						getPecaLista();
-						
-					}
-				});
-			});
-		}
-	</script>
 	<?
 	include("footer.php");
 }
@@ -2921,41 +2464,6 @@ if ($acao == "add_orc_rapido"){
 	header("Location: os_controle_aguarda_orcamento.php?cliente_id=$cliente_id&clienteconfig_id=$clienteconfig_id&os_id=$os_id"); 
 }
 
-if ($acao == "get_produto_externo"){ 
-	$pecas_gspn=$_REQUEST['pecas_gspn'];
-	$produto_id=$_REQUEST['produto_id'];
-	$lista_gspn="";
-
-	$lista_os     = json_decode(json_encode($pecas_gspn), TRUE); 
-	foreach ($lista_os as $k => $v){
-	   if ($lista_gspn==""){
-	   	 $lista_gspn="('";
-	   }		
-	   $lista_gspn.=$v["PartsNo"]."','";
-	    
-	}
-	if ($lista_gspn=="('"){
-        $lista_gspn.="SEMCODIGOS')";
-	}else{
-       $lista_gspn.="')" ;
-	}
-	$sql_pecas_externas="select p.produto_id,p.produto_codigo 
-	from tb_cad_produto_peca pp
-	inner join tb_cad_produto p
-	on pp.produto_id_peca=p.produto_id 
-	where pp.produto_id=".$produto_id." 
-	and p.produto_codigo not in ".$lista_gspn;
-	$res_pecas_extenas=$conn->sql($sql_pecas_externas);
-	while($dados_pecas_extenas=mysqli_fetch_array($res_pecas_extenas)){
-       
-	?>
-	   <option value="<?=$dados_pecas_extenas['produto_id']?>"> <?=$dados_pecas_extenas['produto_codigo']?> - Fora GSPN </option>
-	<?
-    }
-
-
-	
-}
 
 $conn->fechar();
 ?>
